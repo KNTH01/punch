@@ -28,4 +28,11 @@ describe("punch in", () => {
       await punchIn(db, "Second task");
     }).toThrow("already running");
   });
+
+  test("creates entry with project when provided", async () => {
+    const result = await punchIn(db, "Fix bug", { project: "acme-app" });
+
+    const entry = db.select().from(entries).get();
+    expect(entry?.project).toBe("acme-app");
+  });
 });
