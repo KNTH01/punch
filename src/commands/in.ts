@@ -1,6 +1,7 @@
 import { isNull } from "drizzle-orm";
 import { entries } from "../db/schema";
 import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
+import { formatTime } from "../lib/format";
 
 export async function punchIn(
   db: BunSQLiteDatabase,
@@ -16,10 +17,7 @@ export async function punchIn(
     .get();
 
   if (activeTask) {
-    const timeStr = activeTask.startTime.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit'
-    });
+    const timeStr = formatTime(activeTask.startTime);
     throw new Error(
       `Task already running: "${activeTask.taskName}" started at ${timeStr}`
     );
