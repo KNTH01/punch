@@ -27,6 +27,7 @@ A feature-rich CLI time tracker built with Bun. The project will eventually evol
 ### Why Drizzle?
 
 Even though the initial schema is simple (1 table), using Drizzle from the start enables:
+
 - Shared schema across future monorepo packages (cli, backend, frontend)
 - Type safety everywhere
 - Clean migration management as features evolve
@@ -40,47 +41,58 @@ Single table to start - simple and effective.
 
 ```typescript
 // src/db/schema.ts
-import { sqliteTable, integer, text } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, integer, text } from "drizzle-orm/sqlite-core";
 
-export const entries = sqliteTable('entries', {
-  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
-  taskName: text('task_name').notNull(),
-  project: text('project'),
-  startTime: integer('start_time', { mode: 'timestamp_ms' }).notNull(),
-  endTime: integer('end_time', { mode: 'timestamp_ms' }), // NULL = currently running
-  lastActivity: integer('last_activity', { mode: 'timestamp_ms' }),
-  createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull().$defaultFn(() => new Date()),
-  updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull().$defaultFn(() => new Date()),
+export const entries = sqliteTable("entries", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  taskName: text("task_name").notNull(),
+  project: text("project"),
+  startTime: integer("start_time", { mode: "timestamp_ms" }).notNull(),
+  endTime: integer("end_time", { mode: "timestamp_ms" }), // NULL = currently running
+  lastActivity: integer("last_activity", { mode: "timestamp_ms" }),
+  createdAt: integer("created_at", { mode: "timestamp_ms" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+    .notNull()
+    .$defaultFn(() => new Date()),
 });
 ```
 
 ### Design Decisions
 
 **UUID primary keys:** Using `crypto.randomUUID()` (Bun native API) instead of auto-increment integers.
+
 - Enables offline-first sync when backend is added
 - Prevents ID collisions across multiple CLI instances
 - Uses Bun's built-in Web Crypto API (learning goal)
 - Minimal performance cost for time tracking scale
 
 **Millisecond timestamps:** Using `mode: "timestamp_ms"` instead of `mode: "timestamp"`.
+
 - Matches JavaScript Date's native precision (milliseconds)
 - Prevents precision loss when storing/retrieving times
 - Same storage cost as seconds (both are integers)
 - Future-proof for precise duration calculations
 
 **Active task detection:** Query-based (`WHERE end_time IS NULL`) instead of separate state table.
+
 - Simpler - single source of truth
 - Can't get out of sync
 - Fast enough with SQLite indexing
 - YAGNI - add state table later if actually needed
 
 **No pause/resume:** Just start/stop sessions.
+
 - Clearer mental model: each entry = one continuous work period
 - Simpler implementation
 - Reports aggregate multiple sessions by task name + project
 - If interrupted, just stop and start again
 
 **Project organization:** Tasks belong to projects, tags come later.
+
 - `--project` flag for organization
 - Future: Add tags (#work, #personal, #accountability)
 
@@ -121,21 +133,25 @@ punch stop  → punch out
 ### Command Details
 
 **`punch in "Task" [-p project]`**
+
 - Creates new entry with `start_time = now`, `end_time = null`
 - Error if task already running
 - Output: `✓ Started "Fix bug" on acme-app at 2:00pm`
 
 **`punch out [-a HH:MM]`**
+
 - Finds active entry (`end_time IS NULL`)
 - Sets `end_time = now` (or custom time with `--at`)
 - Validates: end time must be after start time
 - Output: `✓ Stopped "Fix bug" - worked 2h 30m`
 
 **`punch status`**
+
 - Shows active task or "No active task"
 - Output: `Working on 'Fix bug' (acme-app) - started 2:00pm (30m ago)`
 
 **`punch log [filters...]`**
+
 - Lists entries in table format
 - Example:
   ```
@@ -145,6 +161,7 @@ punch stop  → punch out
   ```
 
 **`punch summary [filters...]`**
+
 - Aggregates time by project and/or task
 - Example:
   ```
@@ -155,6 +172,7 @@ punch stop  → punch out
   ```
 
 **`punch cancel`**
+
 - Deletes active entry
 - Confirmation prompt
 - Output: `✓ Cancelled "Fix bug"`
@@ -271,23 +289,28 @@ export function initDB() {
 ## Future Features (Not in MVP)
 
 ### Inactivity Detection
+
 - Monitor system idle time (using `xprintidle` on Linux or command-based tracking)
 - Prompt user when idle > threshold: "Stop task at last activity or now?"
 - Prevents forgotten time entries
 
 ### Edit Command
+
 - `punch edit <id> [--task "..."] [--project "..."] [--start HH:MM] [--end HH:MM]`
 - Modify existing entries
 
 ### Tags Support
+
 - `punch in "Task" -p project --tags work,urgent`
 - Filter by tags in log/summary
 
 ### JSON Export
+
 - `punch export [filters...] --json`
 - Export time entries for analysis/backup
 
 ### Monorepo Evolution
+
 ```
 packages/
 ├── cli/          # Current project
@@ -299,6 +322,7 @@ packages/
 ## Success Criteria
 
 MVP is successful when:
+
 - Can track time on tasks with projects
 - Can view current status and history
 - Can generate basic reports

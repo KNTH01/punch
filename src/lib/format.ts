@@ -14,9 +14,9 @@ export type LogEntry = {
  * Format time as "2:30pm"
  */
 export function formatTime(date: Date): string {
-  return date.toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit'
+  return date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
   });
 }
 
@@ -70,9 +70,9 @@ export function formatDate(date: Date): string {
     return "Yesterday";
   }
 
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric'
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
   });
 }
 
@@ -85,12 +85,12 @@ export function formatLogTable(entries: LogEntry[]): string {
   }
 
   // Calculate column widths
-  const idWidth = Math.max(2, ...entries.map(e => e.id.length));
-  const taskWidth = Math.max(4, ...entries.map(e => e.taskName.length));
-  const projectWidth = Math.max(7, ...entries.map(e => (e.project || "").length));
-  const startWidth = Math.max(5, ...entries.map(e => e.formattedStart.length));
-  const endWidth = Math.max(3, ...entries.map(e => e.formattedEnd.length));
-  const durationWidth = Math.max(8, ...entries.map(e => e.formattedDuration.length));
+  const idWidth = Math.max(2, ...entries.map((e) => e.id.length));
+  const taskWidth = Math.max(4, ...entries.map((e) => e.taskName.length));
+  const projectWidth = Math.max(7, ...entries.map((e) => (e.project || "").length));
+  const startWidth = Math.max(5, ...entries.map((e) => e.formattedStart.length));
+  const endWidth = Math.max(3, ...entries.map((e) => e.formattedEnd.length));
+  const durationWidth = Math.max(8, ...entries.map((e) => e.formattedDuration.length));
 
   // Build header
   const header = [
@@ -99,20 +99,20 @@ export function formatLogTable(entries: LogEntry[]): string {
     "Project".padEnd(projectWidth),
     "Start".padEnd(startWidth),
     "End".padEnd(endWidth),
-    "Duration".padEnd(durationWidth)
+    "Duration".padEnd(durationWidth),
   ].join(" | ");
 
   const separator = "-".repeat(header.length);
 
   // Build rows
-  const rows = entries.map(entry => {
+  const rows = entries.map((entry) => {
     return [
       entry.id.padEnd(idWidth),
       entry.taskName.padEnd(taskWidth),
       (entry.project || "").padEnd(projectWidth),
       entry.formattedStart.padEnd(startWidth),
       entry.formattedEnd.padEnd(endWidth),
-      entry.formattedDuration.padEnd(durationWidth)
+      entry.formattedDuration.padEnd(durationWidth),
     ].join(" | ");
   });
 

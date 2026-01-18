@@ -2,17 +2,9 @@ import { eq, isNull } from "drizzle-orm";
 import { entries } from "../db/schema";
 import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 
-export async function punchOut(
-  db: BunSQLiteDatabase,
-  options: { at?: string } = {}
-) {
+export async function punchOut(db: BunSQLiteDatabase, options: { at?: string } = {}) {
   // Find active task
-  const activeTask = await db
-    .select()
-    .from(entries)
-    .where(isNull(entries.endTime))
-    .limit(1)
-    .get();
+  const activeTask = db.select().from(entries).where(isNull(entries.endTime)).limit(1).get();
 
   if (!activeTask) {
     throw new Error("No active task to stop");
@@ -22,13 +14,11 @@ export async function punchOut(
 
   // Validate end time is after start time
   if (endTime <= activeTask.startTime) {
-    const timeStr = activeTask.startTime.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit'
+    const timeStr = activeTask.startTime.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
     });
-    throw new Error(
-      `End time must be after start time (${timeStr})`
-    );
+    throw new Error(`End time must be after start time (${timeStr})`);
   }
 
   const [updated] = await db

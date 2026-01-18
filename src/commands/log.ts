@@ -10,7 +10,7 @@ export async function punchLog(
     week?: boolean;
     month?: boolean;
     project?: string;
-  } = {}
+  } = {},
 ): Promise<LogEntry[]> {
   // Validate mutually exclusive time filters
   const timeFilters = [options.today, options.week, options.month].filter(Boolean);
@@ -19,7 +19,7 @@ export async function punchLog(
   }
 
   // Determine time range (default to today)
-  const filterType = options.week ? 'week' : options.month ? 'month' : 'today';
+  const filterType = options.week ? "week" : options.month ? "month" : "today";
   const { start } = getDateRange(filterType);
 
   // Build query conditions
@@ -30,7 +30,7 @@ export async function punchLog(
   }
 
   // Query entries
-  const results = await db
+  const results = db
     .select()
     .from(entries)
     .where(and(...conditions))
@@ -38,10 +38,8 @@ export async function punchLog(
     .all();
 
   // Map to LogEntry objects with computed fields
-  return results.map(entry => {
-    const duration = entry.endTime
-      ? entry.endTime.getTime() - entry.startTime.getTime()
-      : null;
+  return results.map((entry) => {
+    const duration = entry.endTime ? entry.endTime.getTime() - entry.startTime.getTime() : null;
 
     return {
       id: entry.id,
@@ -52,7 +50,7 @@ export async function punchLog(
       duration,
       formattedDuration: formatDuration(entry.startTime, entry.endTime),
       formattedStart: formatTime(entry.startTime),
-      formattedEnd: entry.endTime ? formatTime(entry.endTime) : ""
+      formattedEnd: entry.endTime ? formatTime(entry.endTime) : "",
     };
   });
 }
@@ -60,16 +58,16 @@ export async function punchLog(
 /**
  * Get date range boundaries for time filters
  */
-function getDateRange(filter: 'today' | 'week' | 'month'): { start: Date } {
+function getDateRange(filter: "today" | "week" | "month"): { start: Date } {
   const now = new Date();
   const start = new Date(now);
 
   switch (filter) {
-    case 'today':
+    case "today":
       start.setHours(0, 0, 0, 0);
       break;
 
-    case 'week':
+    case "week":
       // Set to Monday 00:00 of current week
       start.setHours(0, 0, 0, 0);
       const dayOfWeek = start.getDay();
@@ -78,7 +76,7 @@ function getDateRange(filter: 'today' | 'week' | 'month'): { start: Date } {
       start.setDate(start.getDate() - daysToMonday);
       break;
 
-    case 'month':
+    case "month":
       start.setDate(1);
       start.setHours(0, 0, 0, 0);
       break;

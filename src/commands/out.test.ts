@@ -21,9 +21,7 @@ describe("punch out", () => {
 
     const entry = db.select().from(entries).get();
     expect(entry?.endTime).toBeInstanceOf(Date);
-    expect(entry?.endTime?.getTime()).toBeGreaterThan(
-      entry?.startTime.getTime() || 0
-    );
+    expect(entry?.endTime?.getTime()).toBeGreaterThan(entry?.startTime.getTime() || 0);
   });
 
   test("throws error if no active task", async () => {
@@ -49,7 +47,7 @@ describe("punch out", () => {
     // Try to end 2 hours in the past
     const twoHoursAgo = new Date();
     twoHoursAgo.setHours(twoHoursAgo.getHours() - 2);
-    const timeStr = `${twoHoursAgo.getHours()}:${String(twoHoursAgo.getMinutes()).padStart(2, '0')}`;
+    const timeStr = `${twoHoursAgo.getHours()}:${String(twoHoursAgo.getMinutes()).padStart(2, "0")}`;
 
     expect(async () => {
       await punchOut(db, { at: timeStr });

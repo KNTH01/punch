@@ -96,8 +96,8 @@ describe("formatLogTable", () => {
         duration: 3600000,
         formattedDuration: "1h",
         formattedStart: "10:00 AM",
-        formattedEnd: "11:00 AM"
-      }
+        formattedEnd: "11:00 AM",
+      },
     ];
 
     const result = formatLogTable(entries);
@@ -125,8 +125,8 @@ describe("formatLogTable", () => {
         duration: null,
         formattedDuration: "(active)",
         formattedStart: "10:00 AM",
-        formattedEnd: ""
-      }
+        formattedEnd: "",
+      },
     ];
 
     const result = formatLogTable(entries);
@@ -145,8 +145,8 @@ describe("formatLogTable", () => {
         duration: 3600000,
         formattedDuration: "1h",
         formattedStart: "10:00 AM",
-        formattedEnd: "11:00 AM"
-      }
+        formattedEnd: "11:00 AM",
+      },
     ];
 
     const result = formatLogTable(entries);
@@ -164,7 +164,7 @@ describe("formatLogTable", () => {
         duration: 3600000,
         formattedDuration: "1h",
         formattedStart: "9:00 AM",
-        formattedEnd: "10:00 AM"
+        formattedEnd: "10:00 AM",
       },
       {
         id: "2",
@@ -175,8 +175,8 @@ describe("formatLogTable", () => {
         duration: 4500000,
         formattedDuration: "1h 15m",
         formattedStart: "10:30 AM",
-        formattedEnd: "11:45 AM"
-      }
+        formattedEnd: "11:45 AM",
+      },
     ];
 
     const result = formatLogTable(entries);
@@ -197,8 +197,8 @@ describe("formatLogTable", () => {
         duration: 3600000,
         formattedDuration: "1h",
         formattedStart: "10:00 AM",
-        formattedEnd: "11:00 AM"
-      }
+        formattedEnd: "11:00 AM",
+      },
     ];
 
     const result = formatLogTable(entries);

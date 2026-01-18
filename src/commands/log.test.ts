@@ -142,7 +142,7 @@ describe("punch log", () => {
     const results = await punchLog(db, { week: true });
 
     expect(results.length).toBeGreaterThanOrEqual(1);
-    const mondayTask = results.find(r => r.taskName === "Monday task");
+    const mondayTask = results.find((r) => r.taskName === "Monday task");
     expect(mondayTask).toBeDefined();
   });
 
@@ -172,9 +172,9 @@ describe("punch log", () => {
 
     const results = await punchLog(db, { month: true });
 
-    const monthStartTask = results.find(r => r.taskName === "Month start task");
+    const monthStartTask = results.find((r) => r.taskName === "Month start task");
     expect(monthStartTask).toBeDefined();
-    const lastMonthTask = results.find(r => r.taskName === "Last month task");
+    const lastMonthTask = results.find((r) => r.taskName === "Last month task");
     expect(lastMonthTask).toBeUndefined();
   });
 
