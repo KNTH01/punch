@@ -85,7 +85,6 @@ export function formatLogTable(entries: LogEntry[]): string {
   }
 
   // Calculate column widths
-  const idWidth = Math.max(2, ...entries.map((e) => e.id.length));
   const taskWidth = Math.max(4, ...entries.map((e) => e.taskName.length));
   const projectWidth = Math.max(7, ...entries.map((e) => (e.project || "").length));
   const startWidth = Math.max(5, ...entries.map((e) => e.formattedStart.length));
@@ -94,7 +93,6 @@ export function formatLogTable(entries: LogEntry[]): string {
 
   // Build header
   const header = [
-    "ID".padEnd(idWidth),
     "Task".padEnd(taskWidth),
     "Project".padEnd(projectWidth),
     "Start".padEnd(startWidth),
@@ -107,7 +105,7 @@ export function formatLogTable(entries: LogEntry[]): string {
   // Build rows
   const rows = entries.map((entry) => {
     return [
-      entry.id.padEnd(idWidth),
+      // entry.id.padEnd(idWidth),
       entry.taskName.padEnd(taskWidth),
       (entry.project || "").padEnd(projectWidth),
       entry.formattedStart.padEnd(startWidth),
