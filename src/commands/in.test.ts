@@ -12,13 +12,14 @@ describe("punch in", () => {
 
   test("creates entry with start time and no end time", async () => {
     const result = await punchIn(db, "Fix bug");
+    expect(result).toBeDefined();
 
     const allEntries = db.select().from(entries).all();
     expect(allEntries).toHaveLength(1);
-    expect(allEntries[0].taskName).toBe("Fix bug");
-    expect(allEntries[0].startTime).toBeInstanceOf(Date);
-    expect(allEntries[0].endTime).toBeNull();
-    expect(allEntries[0].project).toBeNull();
+    expect(allEntries[0]?.taskName).toBe("Fix bug");
+    expect(allEntries[0]?.startTime).toBeInstanceOf(Date);
+    expect(allEntries[0]?.endTime).toBeNull();
+    expect(allEntries[0]?.project).toBeNull();
   });
 
   test("throws error if active task already exists", async () => {
@@ -31,6 +32,7 @@ describe("punch in", () => {
 
   test("creates entry with project when provided", async () => {
     const result = await punchIn(db, "Fix bug", { project: "acme-app" });
+    expect(result).toBeDefined();
 
     const entry = db.select().from(entries).get();
     expect(entry?.project).toBe("acme-app");

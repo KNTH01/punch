@@ -6,10 +6,10 @@ import { formatTime } from "../lib/format";
 export async function punchIn(
   db: BunSQLiteDatabase,
   taskName: string,
-  options: { project?: string } = {}
+  options: { project?: string } = {},
 ) {
   // Check for active task
-  const activeTask = await db
+  const activeTask = db
     .select()
     .from(entries)
     .where(isNull(entries.endTime))
@@ -19,7 +19,7 @@ export async function punchIn(
   if (activeTask) {
     const timeStr = formatTime(activeTask.startTime);
     throw new Error(
-      `Task already running: "${activeTask.taskName}" started at ${timeStr}`
+      `Task already running: "${activeTask.taskName}" started at ${timeStr}`,
     );
   }
 
