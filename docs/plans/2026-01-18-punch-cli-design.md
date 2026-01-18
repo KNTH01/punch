@@ -43,18 +43,30 @@ Single table to start - simple and effective.
 import { sqliteTable, integer, text } from 'drizzle-orm/sqlite-core';
 
 export const entries = sqliteTable('entries', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   taskName: text('task_name').notNull(),
   project: text('project'),
-  startTime: integer('start_time', { mode: 'timestamp' }).notNull(),
-  endTime: integer('end_time', { mode: 'timestamp' }), // NULL = currently running
-  lastActivity: integer('last_activity', { mode: 'timestamp' }),
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+  startTime: integer('start_time', { mode: 'timestamp_ms' }).notNull(),
+  endTime: integer('end_time', { mode: 'timestamp_ms' }), // NULL = currently running
+  lastActivity: integer('last_activity', { mode: 'timestamp_ms' }),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull().$defaultFn(() => new Date()),
+  updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull().$defaultFn(() => new Date()),
 });
 ```
 
 ### Design Decisions
+
+**UUID primary keys:** Using `crypto.randomUUID()` (Bun native API) instead of auto-increment integers.
+- Enables offline-first sync when backend is added
+- Prevents ID collisions across multiple CLI instances
+- Uses Bun's built-in Web Crypto API (learning goal)
+- Minimal performance cost for time tracking scale
+
+**Millisecond timestamps:** Using `mode: "timestamp_ms"` instead of `mode: "timestamp"`.
+- Matches JavaScript Date's native precision (milliseconds)
+- Prevents precision loss when storing/retrieving times
+- Same storage cost as seconds (both are integers)
+- Future-proof for precise duration calculations
 
 **Active task detection:** Query-based (`WHERE end_time IS NULL`) instead of separate state table.
 - Simpler - single source of truth

@@ -3,6 +3,9 @@
   "module": "index.ts",
   "type": "module",
   "private": true,
+  "scripts": {
+    "mirate": "bun run migrate.ts"
+  },
   "dependencies": {
     "drizzle-orm": "^0.45.1"
   },
