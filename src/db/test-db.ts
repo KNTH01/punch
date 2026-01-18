@@ -5,6 +5,8 @@ import { migrate } from "drizzle-orm/bun-sqlite/migrator";
 export function createTestDb() {
   const sqlite = new Database(":memory:");
   const db = drizzle(sqlite);
+
   migrate(db, { migrationsFolder: "./drizzle" });
+
   return db;
 }
