@@ -20,4 +20,12 @@ describe("punch in", () => {
     expect(allEntries[0].endTime).toBeNull();
     expect(allEntries[0].project).toBeNull();
   });
+
+  test("throws error if active task already exists", async () => {
+    await punchIn(db, "First task");
+
+    expect(async () => {
+      await punchIn(db, "Second task");
+    }).toThrow("already running");
+  });
 });
