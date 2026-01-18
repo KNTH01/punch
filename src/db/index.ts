@@ -6,7 +6,7 @@ import { existsSync, mkdirSync } from "fs";
 function getDbPath(): string {
   const home = process.env.HOME || "";
   const xdgDataHome = process.env.XDG_DATA_HOME || `${home}/.local/share`;
-  const dataDir = `${xdgDataHome}/timetrack`;
+  const dataDir = `${xdgDataHome}/punch`;
 
   // Create directory if it doesn't exist
   if (!existsSync(dataDir)) {
@@ -18,6 +18,7 @@ function getDbPath(): string {
 
 const dbPath = getDbPath();
 const sqlite = new Database(dbPath);
+
 export const db = drizzle(sqlite);
 
 // Auto-run migrations on import
