@@ -21,8 +21,8 @@ describe("punch log", () => {
     const results = await punchLog(db);
 
     expect(results).toHaveLength(2);
-    expect(results[0].taskName).toBe("Task 1");
-    expect(results[1].taskName).toBe("Task 2");
+    expect(results[0]!.taskName).toBe("Task 1");
+    expect(results[1]!.taskName).toBe("Task 2");
   });
 
   test("returns empty array when no entries today", async () => {
@@ -36,11 +36,11 @@ describe("punch log", () => {
     const results = await punchLog(db);
 
     expect(results).toHaveLength(1);
-    expect(results[0].taskName).toBe("Active task");
-    expect(results[0].endTime).toBeNull();
-    expect(results[0].duration).toBeNull();
-    expect(results[0].formattedDuration).toBe("(active)");
-    expect(results[0].formattedEnd).toBe("");
+    expect(results[0]!.taskName).toBe("Active task");
+    expect(results[0]!.endTime).toBeNull();
+    expect(results[0]!.duration).toBeNull();
+    expect(results[0]!.formattedDuration).toBe("(active)");
+    expect(results[0]!.formattedEnd).toBe("");
   });
 
   test("filters by project", async () => {
@@ -55,10 +55,10 @@ describe("punch log", () => {
     const results = await punchLog(db, { project: "project-a" });
 
     expect(results).toHaveLength(2);
-    expect(results[0].taskName).toBe("Task A");
-    expect(results[1].taskName).toBe("Task C");
-    expect(results[0].project).toBe("project-a");
-    expect(results[1].project).toBe("project-a");
+    expect(results[0]!.taskName).toBe("Task A");
+    expect(results[1]!.taskName).toBe("Task C");
+    expect(results[0]!.project).toBe("project-a");
+    expect(results[1]!.project).toBe("project-a");
   });
 
   test("returns entries in chronological order", async () => {
@@ -76,12 +76,12 @@ describe("punch log", () => {
     const results = await punchLog(db);
 
     expect(results).toHaveLength(3);
-    expect(results[0].taskName).toBe("First");
-    expect(results[1].taskName).toBe("Second");
-    expect(results[2].taskName).toBe("Third");
+    expect(results[0]!.taskName).toBe("First");
+    expect(results[1]!.taskName).toBe("Second");
+    expect(results[2]!.taskName).toBe("Third");
     // Verify ordering by comparing timestamps
-    expect(results[0].startTime.getTime()).toBeLessThan(results[1].startTime.getTime());
-    expect(results[1].startTime.getTime()).toBeLessThan(results[2].startTime.getTime());
+    expect(results[0]!.startTime.getTime()).toBeLessThan(results[1]!.startTime.getTime());
+    expect(results[1]!.startTime.getTime()).toBeLessThan(results[2]!.startTime.getTime());
   });
 
   test("calculates duration accurately", async () => {
@@ -92,9 +92,9 @@ describe("punch log", () => {
     const results = await punchLog(db);
 
     expect(results).toHaveLength(1);
-    expect(results[0].duration).toBeGreaterThanOrEqual(100);
-    expect(results[0].duration).toBeLessThan(200); // Allow some margin
-    expect(results[0].endTime).not.toBeNull();
+    expect(results[0]!.duration).toBeGreaterThanOrEqual(100);
+    expect(results[0]!.duration).toBeLessThan(200); // Allow some margin
+    expect(results[0]!.endTime).not.toBeNull();
   });
 
   test("week filter excludes entries older than current week", async () => {
@@ -118,7 +118,7 @@ describe("punch log", () => {
     const results = await punchLog(db, { week: true });
 
     expect(results).toHaveLength(1);
-    expect(results[0].taskName).toBe("This week task");
+    expect(results[0]!.taskName).toBe("This week task");
   });
 
   test("week filter includes Monday entries", async () => {
@@ -214,8 +214,8 @@ describe("punch log", () => {
     const results = await punchLog(db, { today: true, project: "project-a" });
 
     expect(results).toHaveLength(1);
-    expect(results[0].taskName).toBe("Project A task");
-    expect(results[0].project).toBe("project-a");
+    expect(results[0]!.taskName).toBe("Project A task");
+    expect(results[0]!.project).toBe("project-a");
   });
 
   test("returns empty array for non-existent project", async () => {
@@ -234,7 +234,7 @@ describe("punch log", () => {
     const results = await punchLog(db);
 
     expect(results).toHaveLength(1);
-    const entry = results[0];
+    const entry = results[0]!;
     expect(entry.id).toBeDefined();
     expect(entry.taskName).toBe("Complete task");
     expect(entry.project).toBe("test-project");
@@ -255,7 +255,7 @@ describe("punch log", () => {
 
     expect(results).toHaveLength(1);
     // Check that formatted time includes AM or PM
-    expect(results[0].formattedStart).toMatch(/AM|PM/i);
-    expect(results[0].formattedEnd).toMatch(/AM|PM/i);
+    expect(results[0]!.formattedStart).toMatch(/AM|PM/i);
+    expect(results[0]!.formattedEnd).toMatch(/AM|PM/i);
   });
 });

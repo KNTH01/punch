@@ -31,20 +31,25 @@ function parseArgs(args: string[]) {
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
+    if (!arg) continue;
 
     if (arg.startsWith("--")) {
       const key = arg.slice(2);
       // Check if next arg is a value or another flag
-      if (i + 1 < args.length && !args[i + 1].startsWith("-")) {
-        flags[key] = args[++i];
+      const nextArg = args[i + 1];
+      if (nextArg && !nextArg.startsWith("-")) {
+        flags[key] = nextArg;
+        i++;
       } else {
         flags[key] = true;
       }
     } else if (arg.startsWith("-")) {
       const key = arg.slice(1);
       // Check if next arg is a value or another flag
-      if (i + 1 < args.length && !args[i + 1].startsWith("-")) {
-        flags[key] = args[++i];
+      const nextArg = args[i + 1];
+      if (nextArg && !nextArg.startsWith("-")) {
+        flags[key] = nextArg;
+        i++;
       } else {
         flags[key] = true;
       }
@@ -79,6 +84,7 @@ async function main() {
 
         const project = (flags.p || flags.project) as string | undefined;
         const result = await punchIn(db, taskName, { project });
+        if (!result) throw new Error("Failed to start task");
 
         const time = result.startTime.toLocaleTimeString("en-US", {
           hour: "numeric",
@@ -95,6 +101,7 @@ async function main() {
         const at = (flags.a || flags.at) as string | undefined;
 
         const result = await punchOut(db, { at });
+        if (!result) throw new Error("Failed to stop task");
 
         // Calculate duration in minutes
         const durationMs = result.endTime!.getTime() - result.startTime.getTime();

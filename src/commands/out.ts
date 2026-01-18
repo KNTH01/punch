@@ -38,6 +38,9 @@ function parseTime(timeStr: string): Date {
   }
 
   const [, hours, minutes] = match;
+  if (!hours || !minutes) {
+    throw new Error(`Invalid time format: ${timeStr}. Use HH:MM (e.g., 14:30)`);
+  }
   const now = new Date();
   now.setHours(parseInt(hours), parseInt(minutes), 0, 0);
 
