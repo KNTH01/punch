@@ -1,4 +1,4 @@
-# my-time-tracker
+# punch
 
 To install dependencies:
 
