@@ -13,7 +13,7 @@ function getDbPath(): string {
     mkdirSync(dataDir, { recursive: true });
   }
 
-  return `${dataDir}/timetrack.db`;
+  return `${dataDir}/punch.db`;
 }
 
 const dbPath = getDbPath();
