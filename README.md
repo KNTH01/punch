@@ -1,15 +1,46 @@
-# punch
+# Punch
 
-To install dependencies:
+A fast, simple CLI time tracker built with Bun.
+
+## Quick Start
 
 ```bash
+# Install dependencies
 bun install
+
+# Start tracking time
+bun run index.ts in "Fix bug" -p project-name
+
+# Stop tracking
+bun run index.ts out
+
+# View entries
+bun run index.ts log
 ```
 
-To run:
+## Commands
+
+- `punch in "task" [-p project]` - Start tracking time
+- `punch out [-a HH:MM]` - Stop tracking (optional custom time)
+- `punch log [--today|--week|--month] [--project name]` - List entries
+- `punch edit [<id>] [task] [--flags]` - Modify entries
+
+## Development
 
 ```bash
-bun run index.ts
+bun test              # Run tests
+bun run typecheck     # TypeScript checks
+bun run migrate       # Run database migrations
 ```
 
-This project was created using `bun init` in bun v1.3.6. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
+See [docs/](docs/) for detailed documentation, architecture, and current development status.
+
+## Tech Stack
+
+- **Runtime:** Bun
+- **Database:** SQLite via `bun:sqlite` + Drizzle ORM
+- **Testing:** `bun:test`
+
+---
+
+Built with [Bun](https://bun.sh) - a fast all-in-one JavaScript runtime.
