@@ -6,13 +6,13 @@ import { existsSync, mkdirSync } from "fs";
 function getDbPath(): string {
   const home = process.env.HOME || "";
   const xdgDataHome = process.env.XDG_DATA_HOME || `${home}/.local/share`;
-  const dataDir = `${xdgDataHome}/timetrack`;
+  const dataDir = `${xdgDataHome}/punch`;
 
   if (!existsSync(dataDir)) {
     mkdirSync(dataDir, { recursive: true });
   }
 
-  return `${dataDir}/timetrack.db`;
+  return `${dataDir}/punch.db`;
 }
 
 const dbPath = getDbPath();
