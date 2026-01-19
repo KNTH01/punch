@@ -100,8 +100,8 @@ export const entries = sqliteTable("entries", {
 
 Following Linux conventions:
 
-- **Database:** `$XDG_DATA_HOME/timetrack/timetrack.db` (defaults to `~/.local/share/timetrack/timetrack.db`)
-- **Config (future):** `$XDG_CONFIG_HOME/timetrack/config.json` (defaults to `~/.config/timetrack/config.json`)
+- **Database:** `$XDG_DATA_HOME/punch/punch.db` (defaults to `~/.local/share/punch/punch.db`)
+- **Config (future):** `$XDG_CONFIG_HOME/punch/config.json` (defaults to `~/.config/punch/config.json`)
 
 ## CLI Commands
 
@@ -254,15 +254,15 @@ On first run:
 // src/db/index.ts
 export function initDB() {
   const dataDir = process.env.XDG_DATA_HOME
-    ? `${process.env.XDG_DATA_HOME}/timetrack`
-    : `${process.env.HOME}/.local/share/timetrack`;
+    ? `${process.env.XDG_DATA_HOME}/punch`
+    : `${process.env.HOME}/.local/share/punch`;
 
   // Create directory if missing
   if (!existsSync(dataDir)) {
     mkdirSync(dataDir, { recursive: true });
   }
 
-  const dbPath = `${dataDir}/timetrack.db`;
+  const dbPath = `${dataDir}/punch.db`;
   const db = new Database(dbPath);
 
   // Run Drizzle migrations

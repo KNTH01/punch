@@ -1,6 +1,7 @@
 import { eq, isNull } from "drizzle-orm";
 import { entries } from "../db/schema";
 import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
+import { parseTime } from "../lib/time";
 
 export async function punchOut(db: BunSQLiteDatabase, options: { at?: string } = {}) {
   // Find active task
@@ -28,21 +29,4 @@ export async function punchOut(db: BunSQLiteDatabase, options: { at?: string } =
     .returning();
 
   return updated;
-}
-
-function parseTime(timeStr: string): Date {
-  // Parse HH:MM format
-  const match = timeStr.match(/^(\d{1,2}):(\d{2})$/);
-  if (!match) {
-    throw new Error(`Invalid time format: ${timeStr}. Use HH:MM (e.g., 14:30)`);
-  }
-
-  const [, hours, minutes] = match;
-  if (!hours || !minutes) {
-    throw new Error(`Invalid time format: ${timeStr}. Use HH:MM (e.g., 14:30)`);
-  }
-  const now = new Date();
-  now.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-
-  return now;
 }

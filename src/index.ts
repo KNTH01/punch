@@ -2,6 +2,7 @@ import { db } from "./db";
 import { punchIn } from "./commands/in";
 import { punchLog } from "./commands/log";
 import { punchOut } from "./commands/out";
+import { punchEdit } from "./commands/edit";
 import { formatLogTable } from "./lib/format";
 
 const HELP_TEXT = `
@@ -13,6 +14,11 @@ Commands:
 
   out, stop                Stop tracking
     -a, --at <HH:MM>       Custom end time
+
+  edit [<id>] [task]       Edit an entry
+    -p, --project <name>   Update project
+    --start <time>         Update start time (HH:MM, 2pm, YYYY-MM-DD HH:MM)
+    --end <time>           Update end time (HH:MM, 2pm, YYYY-MM-DD HH:MM)
 
   log                      List time entries
     --today                Today's entries
@@ -111,6 +117,70 @@ async function main() {
         const durationStr = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
 
         console.log(`✓ Stopped '${result.taskName}' - worked ${durationStr}`);
+        break;
+      }
+
+      case "edit": {
+        const rawArgs = process.argv.slice(3);
+        const { flags, positional } = parseArgs(rawArgs);
+
+        // Handle position references (-N) which parseArgs treats as flags
+        let idOrPosition: string | undefined;
+        let taskName: string | undefined;
+
+        // Check if first arg is a position reference (-1, -2, etc.)
+        const firstArg = rawArgs[0];
+        if (firstArg && /^-\d+$/.test(firstArg)) {
+          idOrPosition = firstArg;
+          // Find next non-flag arg as task name
+          for (let i = 1; i < rawArgs.length; i++) {
+            const arg = rawArgs[i];
+            if (arg && !arg.startsWith("--")) {
+              // Skip if it's a value for a flag
+              const prevArg = rawArgs[i - 1];
+              if (!prevArg || !prevArg.startsWith("-") || /^-\d+$/.test(prevArg)) {
+                taskName = arg;
+                break;
+              }
+            }
+          }
+        } else if (positional.length === 1) {
+          const arg = positional[0];
+          if (!arg) break;
+          if (/^[0-9a-f]+$/i.test(arg)) {
+            idOrPosition = arg;
+          } else {
+            taskName = arg;
+          }
+        } else if (positional.length === 2) {
+          idOrPosition = positional[0];
+          taskName = positional[1];
+        } else if (positional.length > 2) {
+          throw new Error("Too many arguments. Usage: punch edit [<id-or-position>] [task-name] [--flags]");
+        }
+
+        const options: {
+          idOrPosition?: string;
+          taskName?: string;
+          project?: string;
+          start?: string;
+          end?: string;
+        } = {};
+
+        if (idOrPosition) options.idOrPosition = idOrPosition;
+        if (taskName) options.taskName = taskName;
+        if (flags.project || flags.p) options.project = (flags.project || flags.p) as string;
+        if (flags.start) options.start = flags.start as string;
+        if (flags.end) options.end = flags.end as string;
+
+        const result = await punchEdit(db, options);
+
+        const time = result.startTime.toLocaleTimeString("en-US", {
+          hour: "numeric",
+          minute: "2-digit",
+        });
+        const projectPart = result.project ? ` on ${result.project}` : "";
+        console.log(`✓ Updated '${result.taskName}'${projectPart} starting at ${time}`);
         break;
       }
 
