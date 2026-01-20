@@ -18,3 +18,5 @@ export const entries = sqliteTable("entries", {
     .notNull()
     .$defaultFn(() => new Date()),
 });
+
+export type Entry = typeof entries.$inferSelect;
