@@ -4,7 +4,10 @@ Quick reference for AI coding agents working in this repository.
 
 ## Project Context
 
-CLI time tracker built with Bun. Focus: learning Bun's native APIs (avoid npm deps when Bun has built-ins).
+CLI time tracker built with Bun. 
+
+Focus: learning Bun's native APIs (avoid npm deps when Bun has built-ins).
+Focus: learning effect-ts
 
 ## Build/Test Commands
 
@@ -297,6 +300,24 @@ console.error(`Error: ${error.message}`);
 - ❌ Large functions (> 30 lines)
 - ❌ Obvious comments
 - ❌ Magic numbers (use named constants)
+
+## btca
+
+When you need up-to-date information about technologies used in this project, ask the user if they'd like you to use btca to research.
+
+**Available resources**: bun, drizzleOrm, typescript, effect
+
+### Usage
+
+```bash
+btca ask -r <resource> -q "<question>"
+```
+
+Use multiple `-r` flags to query multiple resources at once:
+
+```bash
+btca ask -r bun -r effect -q "How do I integrate Effect with Bun?"
+```
 
 ## Resources
 

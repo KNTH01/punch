@@ -1,0 +1,40 @@
+{
+  "$schema": "https://btca.dev/btca.schema.json",
+  "providerTimeoutMs": 300000,
+  "resources": [
+    {
+      "type": "git",
+      "name": "bun",
+      "url": "https://github.com/oven-sh/bun",
+      "branch": "main",
+      "searchPath": "docs",
+      "specialNotes": "Bun runtime documentation. Focus on docs directory for API references and guides."
+    },
+    {
+      "type": "git",
+      "name": "drizzleOrm",
+      "url": "https://github.com/drizzle-team/drizzle-orm",
+      "branch": "main",
+      "searchPath": "drizzle-orm",
+      "specialNotes": "Drizzle ORM documentation and source code."
+    },
+    {
+      "type": "git",
+      "name": "typescript",
+      "url": "https://github.com/microsoft/TypeScript-Website",
+      "branch": "v2",
+      "searchPath": "packages/documentation",
+      "specialNotes": "TypeScript handbook and documentation."
+    },
+    {
+      "type": "git",
+      "name": "effect",
+      "url": "https://github.com/Effect-TS/effect",
+      "branch": "main",
+      "searchPath": "packages/effect",
+      "specialNotes": "Effect-TS library source code and documentation."
+    }
+  ],
+  "model": "claude-haiku-4-5",
+  "provider": "anthropic",
+}
