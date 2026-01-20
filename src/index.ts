@@ -1,5 +1,7 @@
+import { Effect } from "effect";
 import { db } from "./db";
-import { punchIn } from "./commands/in";
+import { punchIn } from "./core/punch-in";
+import { TaskAlreadyRunningError } from "./core/errors";
 import { punchLog } from "./commands/log";
 import { punchOut } from "./commands/out";
 import { punchEdit } from "./commands/edit";
@@ -89,9 +91,26 @@ async function main() {
         }
 
         const project = (flags.p || flags.project) as string | undefined;
-        const result = await punchIn(db, taskName, { project });
-        if (!result) throw new Error("Failed to start task");
+        const program = punchIn(db, taskName, { project });
+        const exit = await Effect.runPromiseExit(program);
 
+        if (exit._tag === "Failure") {
+          // Extract typed error from Cause
+          const cause = exit.cause;
+          if (cause._tag === "Fail" && cause.error instanceof TaskAlreadyRunningError) {
+            const err = cause.error;
+            const time = err.startTime.toLocaleTimeString("en-US", {
+              hour: "numeric",
+              minute: "2-digit",
+            });
+            console.error(`Error: Task already running: "${err.taskName}" started at ${time}`);
+          } else {
+            console.error("Error: Failed to start task");
+          }
+          process.exit(1);
+        }
+
+        const result = exit.value;
         const time = result.startTime.toLocaleTimeString("en-US", {
           hour: "numeric",
           minute: "2-digit",

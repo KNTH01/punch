@@ -8,7 +8,8 @@
     "db:studio": "drizzle-kit studio --config=drizzle.config.ts",
     "typecheck": "bun --bun tsc --noEmit",
     "lint": "oxlint --type-aware --fix",
-    "format": "oxfmt"
+    "format": "oxfmt",
+    "build": "bun build src/index.ts --compile --outfile punch"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.1",
