@@ -26,9 +26,10 @@ export function punchIn(
       .get();
 
     if (activeTask) {
-      return yield* Effect.fail(
-        new TaskAlreadyRunningError(activeTask.taskName, activeTask.startTime),
-      );
+      return yield* new TaskAlreadyRunningError({
+        taskName: activeTask.taskName,
+        startTime: activeTask.startTime,
+      });
     }
 
     const now = new Date();
