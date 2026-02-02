@@ -1,6 +1,7 @@
 import { test, expect, beforeEach, describe } from "bun:test";
+import { Effect } from "effect";
 import { createTestDb } from "../db/test-db";
-import { punchIn } from "./in";
+import { punchIn } from "../core/punch-in";
 import { punchOut } from "./out";
 import { entries } from "../db/schema";
 
@@ -12,7 +13,7 @@ describe("punch out", () => {
   });
 
   test("sets end time on active task", async () => {
-    await punchIn(db, "Fix bug");
+    await Effect.runPromise(punchIn(db, "Fix bug"));
 
     // Wait 1ms to ensure different timestamp
     await Bun.sleep(1);
@@ -31,7 +32,7 @@ describe("punch out", () => {
   });
 
   test("accepts custom end time with --at option", async () => {
-    await punchIn(db, "Fix bug");
+    await Effect.runPromise(punchIn(db, "Fix bug"));
 
     await punchOut(db, { at: "14:30" });
 
@@ -42,7 +43,7 @@ describe("punch out", () => {
 
   test("rejects end time before start time", async () => {
     // Start at current time
-    await punchIn(db, "Fix bug");
+    await Effect.runPromise(punchIn(db, "Fix bug"));
 
     // Try to end 2 hours in the past
     const twoHoursAgo = new Date();

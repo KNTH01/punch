@@ -1,6 +1,6 @@
 import { Effect } from "effect";
-import { isNull } from "drizzle-orm";
 import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
+import { isNull } from "drizzle-orm";
 import { entries, type Entry } from "../db/schema";
 import { TaskAlreadyRunningError } from "./errors";
 

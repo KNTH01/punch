@@ -1,7 +1,8 @@
 import { test, expect, beforeEach, describe } from "bun:test";
+import { Effect } from "effect";
 import { createTestDb } from "../db/test-db";
 import { punchEdit } from "./edit";
-import { punchIn } from "./in";
+import { punchIn } from "../core/punch-in";
 import { entries } from "../db/schema";
 import { eq } from "drizzle-orm";
 
@@ -13,7 +14,7 @@ describe("punch edit", () => {
   });
 
   test("edits active task name", async () => {
-    await punchIn(db, "Original task");
+    await Effect.runPromise(punchIn(db, "Original task"));
 
     const result = await punchEdit(db, { taskName: "Updated task" });
 
@@ -21,7 +22,7 @@ describe("punch edit", () => {
   });
 
   test("falls back to last entry when no active task", async () => {
-    const entry1 = (await punchIn(db, "First task"))!;
+    const entry1 = await Effect.runPromise(punchIn(db, "First task"));
     const endTime = new Date(entry1.startTime);
     endTime.setHours(endTime.getHours() + 1);
     await db.update(entries).set({ endTime }).where(eq(entries.id, entry1.id));
@@ -33,11 +34,11 @@ describe("punch edit", () => {
   });
 
   test("edits entry by ID prefix", async () => {
-    const entry1 = (await punchIn(db, "First task"))!;
+    const entry1 = await Effect.runPromise(punchIn(db, "First task"));
     const endTime1 = new Date(entry1.startTime);
     endTime1.setHours(endTime1.getHours() + 1);
     await db.update(entries).set({ endTime: endTime1 }).where(eq(entries.id, entry1.id));
-    await punchIn(db, "Second task");
+    await Effect.runPromise(punchIn(db, "Second task"));
 
     const prefix = entry1.id.substring(0, 8);
     const result = await punchEdit(db, { idOrPosition: prefix, taskName: "Updated first" });
@@ -47,12 +48,12 @@ describe("punch edit", () => {
   });
 
   test("edits entry by position -1", async () => {
-    const entry1 = (await punchIn(db, "First task"))!;
+    const entry1 = await Effect.runPromise(punchIn(db, "First task"));
     const endTime1 = new Date(entry1.startTime);
     endTime1.setHours(endTime1.getHours() + 1);
     await db.update(entries).set({ endTime: endTime1, startTime: new Date(entry1.startTime.getTime() - 3600000) }).where(eq(entries.id, entry1.id));
 
-    const entry2 = (await punchIn(db, "Second task"))!;
+    const entry2 = await Effect.runPromise(punchIn(db, "Second task"));
     const endTime2 = new Date(entry2.startTime);
     endTime2.setHours(endTime2.getHours() + 1);
     await db.update(entries).set({ endTime: endTime2 }).where(eq(entries.id, entry2.id));
@@ -64,12 +65,12 @@ describe("punch edit", () => {
   });
 
   test("edits entry by position -2", async () => {
-    const entry1 = (await punchIn(db, "First task"))!;
+    const entry1 = await Effect.runPromise(punchIn(db, "First task"));
     const endTime1 = new Date(entry1.startTime);
     endTime1.setHours(endTime1.getHours() + 1);
     await db.update(entries).set({ endTime: endTime1, startTime: new Date(entry1.startTime.getTime() - 3600000) }).where(eq(entries.id, entry1.id));
 
-    const entry2 = (await punchIn(db, "Second task"))!;
+    const entry2 = await Effect.runPromise(punchIn(db, "Second task"));
     const endTime2 = new Date(entry2.startTime);
     endTime2.setHours(endTime2.getHours() + 1);
     await db.update(entries).set({ endTime: endTime2 }).where(eq(entries.id, entry2.id));
@@ -81,7 +82,7 @@ describe("punch edit", () => {
   });
 
   test("updates project", async () => {
-    await punchIn(db, "Task", { project: "old-project" });
+    await Effect.runPromise(punchIn(db, "Task", { project: "old-project" }));
 
     const result = await punchEdit(db, { project: "new-project" });
 
@@ -89,7 +90,7 @@ describe("punch edit", () => {
   });
 
   test("updates start time", async () => {
-    await punchIn(db, "Task");
+    await Effect.runPromise(punchIn(db, "Task"));
 
     const result = await punchEdit(db, { start: "14:00" });
 
@@ -98,7 +99,7 @@ describe("punch edit", () => {
   });
 
   test("validates end time is after start time", async () => {
-    const entry = (await punchIn(db, "Task"))!;
+    const entry = await Effect.runPromise(punchIn(db, "Task"));
     await db.update(entries).set({
       startTime: new Date(2026, 0, 18, 14, 0),
       endTime: new Date(2026, 0, 18, 16, 0)

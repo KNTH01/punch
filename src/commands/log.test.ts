@@ -1,7 +1,8 @@
 import { test, expect, beforeEach, describe } from "bun:test";
+import { Effect } from "effect";
 import { createTestDb } from "../db/test-db";
 import { punchLog } from "./log";
-import { punchIn } from "./in";
+import { punchIn } from "../core/punch-in";
 import { punchOut } from "./out";
 import { entries } from "../db/schema";
 
@@ -13,10 +14,10 @@ describe("punch log", () => {
   });
 
   test("shows today's entries by default", async () => {
-    await punchIn(db, "Task 1");
+    await Effect.runPromise(punchIn(db, "Task 1"));
     await Bun.sleep(1);
     await punchOut(db);
-    await punchIn(db, "Task 2");
+    await Effect.runPromise(punchIn(db, "Task 2"));
 
     const results = await punchLog(db);
 
@@ -31,7 +32,7 @@ describe("punch log", () => {
   });
 
   test("shows active task with null endTime and (active) duration", async () => {
-    await punchIn(db, "Active task");
+    await Effect.runPromise(punchIn(db, "Active task"));
 
     const results = await punchLog(db);
 
@@ -44,13 +45,13 @@ describe("punch log", () => {
   });
 
   test("filters by project", async () => {
-    await punchIn(db, "Task A", { project: "project-a" });
+    await Effect.runPromise(punchIn(db, "Task A", { project: "project-a" }));
     await Bun.sleep(1);
     await punchOut(db);
-    await punchIn(db, "Task B", { project: "project-b" });
+    await Effect.runPromise(punchIn(db, "Task B", { project: "project-b" }));
     await Bun.sleep(1);
     await punchOut(db);
-    await punchIn(db, "Task C", { project: "project-a" });
+    await Effect.runPromise(punchIn(db, "Task C", { project: "project-a" }));
 
     const results = await punchLog(db, { project: "project-a" });
 
@@ -63,15 +64,15 @@ describe("punch log", () => {
 
   test("returns entries in chronological order", async () => {
     // Insert entries at different times
-    await punchIn(db, "First");
+    await Effect.runPromise(punchIn(db, "First"));
     await Bun.sleep(1);
     await punchOut(db);
     await Bun.sleep(10);
-    await punchIn(db, "Second");
+    await Effect.runPromise(punchIn(db, "Second"));
     await Bun.sleep(1);
     await punchOut(db);
     await Bun.sleep(10);
-    await punchIn(db, "Third");
+    await Effect.runPromise(punchIn(db, "Third"));
 
     const results = await punchLog(db);
 
@@ -85,7 +86,7 @@ describe("punch log", () => {
   });
 
   test("calculates duration accurately", async () => {
-    await punchIn(db, "Timed task");
+    await Effect.runPromise(punchIn(db, "Timed task"));
     await Bun.sleep(100); // Wait 100ms
     await punchOut(db);
 
@@ -111,7 +112,7 @@ describe("punch log", () => {
     });
 
     // Create entry from this week
-    await punchIn(db, "This week task");
+    await Effect.runPromise(punchIn(db, "This week task"));
     await Bun.sleep(1);
     await punchOut(db);
 
@@ -194,10 +195,10 @@ describe("punch log", () => {
 
   test("combines project filter with time filter", async () => {
     // Create entries for different projects today
-    await punchIn(db, "Project A task", { project: "project-a" });
+    await Effect.runPromise(punchIn(db, "Project A task", { project: "project-a" }));
     await Bun.sleep(1);
     await punchOut(db);
-    await punchIn(db, "Project B task", { project: "project-b" });
+    await Effect.runPromise(punchIn(db, "Project B task", { project: "project-b" }));
     await Bun.sleep(1);
     await punchOut(db);
 
@@ -219,7 +220,7 @@ describe("punch log", () => {
   });
 
   test("returns empty array for non-existent project", async () => {
-    await punchIn(db, "Task", { project: "real-project" });
+    await Effect.runPromise(punchIn(db, "Task", { project: "real-project" }));
 
     const results = await punchLog(db, { project: "fake-project" });
 
@@ -227,7 +228,7 @@ describe("punch log", () => {
   });
 
   test("includes all required fields in LogEntry", async () => {
-    await punchIn(db, "Complete task", { project: "test-project" });
+    await Effect.runPromise(punchIn(db, "Complete task", { project: "test-project" }));
     await Bun.sleep(1);
     await punchOut(db);
 
@@ -247,7 +248,7 @@ describe("punch log", () => {
   });
 
   test("formatted times use 12-hour format", async () => {
-    await punchIn(db, "Task");
+    await Effect.runPromise(punchIn(db, "Task"));
     await Bun.sleep(1);
     await punchOut(db);
 
