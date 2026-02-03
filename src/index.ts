@@ -1,7 +1,11 @@
 import { Effect } from "effect";
 import { db } from "./db";
 import { punchIn } from "./core/punch-in";
-import { TaskAlreadyRunningError } from "./core/errors";
+import {
+  InvalidEndTimeError,
+  NoActiveTask,
+  TaskAlreadyRunningError,
+} from "./core/errors";
 import { punchLog } from "./commands/log";
 import { punchOut } from "~/core/punch-out";
 import { punchEdit } from "./commands/edit";
@@ -125,8 +129,29 @@ async function main() {
         const { flags } = parseArgs(process.argv.slice(3));
         const at = (flags.a || flags.at) as string | undefined;
 
-        const result = await Effect.runPromise(punchOut(db, { at }));
+        const exit = await Effect.runPromiseExit(punchOut(db, { at }));
 
+        if (exit._tag === "Failure") {
+          const cause = exit.cause;
+          if (cause._tag === "Fail") {
+            if (cause.error instanceof NoActiveTask) {
+              console.error("Error: No active task to stop");
+            } else if (cause.error instanceof InvalidEndTimeError) {
+              const timeStr = cause.error.startTime.toLocaleTimeString("en-US", {
+                hour: "numeric",
+                minute: "2-digit",
+              });
+              console.error(`Error: End time must be after start time (${timeStr})`);
+            } else {
+              console.error("Error: Failed to stop task");
+            }
+          } else {
+            console.error("Error: Failed to stop task");
+          }
+          process.exit(1);
+        }
+
+        const result = exit.value;
         // Calculate duration in minutes
         const durationMs = result.endTime!.getTime() - result.startTime.getTime();
         const durationMinutes = Math.floor(durationMs / 1000 / 60);
