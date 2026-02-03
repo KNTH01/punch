@@ -1,9 +1,9 @@
 import { test, expect, beforeEach, describe } from "bun:test";
 import { Effect } from "effect";
 import { createTestDb } from "../db/test-db";
-import { punchIn } from "../core/punch-in";
-import { punchOut } from "./out";
-import { entries } from "../db/schema";
+import { punchIn } from "~/core/punch-in";
+import { punchOut } from "~/core/punch-out";
+import { entries } from "~/db/schema";
 
 describe("punch out", () => {
   let db: ReturnType<typeof createTestDb>;
@@ -22,7 +22,9 @@ describe("punch out", () => {
 
     const entry = db.select().from(entries).get();
     expect(entry?.endTime).toBeInstanceOf(Date);
-    expect(entry?.endTime?.getTime()).toBeGreaterThan(entry?.startTime.getTime() || 0);
+    expect(entry?.endTime?.getTime()).toBeGreaterThan(
+      entry?.startTime.getTime() || 0,
+    );
   });
 
   test("throws error if no active task", async () => {
