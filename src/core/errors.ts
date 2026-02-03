@@ -6,3 +6,14 @@ export class TaskAlreadyRunningError extends Data.TaggedError(
   readonly taskName: string;
   readonly startTime: Date;
 }> {}
+
+export class NoActiveTask extends Data.TaggedError("NoActiveTask") {}
+
+export class InvalidEndTimeError extends Data.TaggedError("InvalidEndTimeError")<{
+  readonly startTime: Date;
+  readonly endTime: Date;
+}> {}
+
+export class UpdateFailedError extends Data.TaggedError("UpdateFailedError")<{
+  readonly id: string;
+}> {}
