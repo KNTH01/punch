@@ -3,7 +3,7 @@ import { db } from "./db";
 import { punchIn } from "./core/punch-in";
 import { TaskAlreadyRunningError } from "./core/errors";
 import { punchLog } from "./commands/log";
-import { punchOut } from "./commands/out";
+import { punchOut } from "~/core/punch-out";
 import { punchEdit } from "./commands/edit";
 import { formatLogTable } from "./lib/format";
 
@@ -125,8 +125,7 @@ async function main() {
         const { flags } = parseArgs(process.argv.slice(3));
         const at = (flags.a || flags.at) as string | undefined;
 
-        const result = await punchOut(db, { at });
-        if (!result) throw new Error("Failed to stop task");
+        const result = await Effect.runPromise(punchOut(db, { at }));
 
         // Calculate duration in minutes
         const durationMs = result.endTime!.getTime() - result.startTime.getTime();
