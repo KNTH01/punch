@@ -1,4 +1,4 @@
-import { drizzle } from "drizzle-orm/bun-sqlite";
+import { drizzle, type BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 import { Database } from "bun:sqlite";
 import { migrate } from "drizzle-orm/bun-sqlite/migrator";
 import { Effect, Layer } from "effect";
@@ -13,7 +13,7 @@ function createTestDb() {
   return db;
 }
 
-export const DBTest = Layer.effect(
-  DB,
-  Effect.sync(() => createTestDb()),
-);
+export const DBTest = Layer.sync(DB, () => createTestDb());
+
+export const withDB = <A>(fn: (db: BunSQLiteDatabase) => A) =>
+  DB.pipe(Effect.flatMap((db) => Effect.try(() => fn(db))));
