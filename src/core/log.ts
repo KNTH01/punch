@@ -24,28 +24,31 @@ type LogOptions = {
   project?: string;
 };
 
-class LogOptionsValidationError extends Data.TaggedError(
+export class LogOptionsValidationError extends Data.TaggedError(
   "LogOptionsValidationError",
-)<{ options: LogOptions }> {}
+)<{ filters: string[] }> {}
 
 const validateLogOptions = (options: LogOptions) => {
-  // Validate mutually exclusive time filters
-  const timeFilters = [options.today, options.week, options.month].filter(
-    Boolean,
-  );
+  const activeFilters = [
+    options.today && "today",
+    options.week && "week",
+    options.month && "month",
+  ].filter(Boolean) as string[];
 
-  if (timeFilters.length > 1) {
-    return Effect.fail(new LogOptionsValidationError({ options }));
+  if (activeFilters.length > 1) {
+    return Effect.fail(
+      new LogOptionsValidationError({ filters: activeFilters }),
+    );
   }
 
   return Effect.succeed(options);
 };
 
-export const punchLog = (options: LogOptions) =>
+export const punchLog = (options: LogOptions = {}) =>
   Effect.gen(function* () {
     const db = yield* DB;
 
-    options = yield* validateLogOptions(options);
+    yield* validateLogOptions(options);
 
     // Determine time range (default to today)
     const filterType = options.week
