@@ -2,12 +2,8 @@ import { drizzle } from "drizzle-orm/bun-sqlite";
 import { Database } from "bun:sqlite";
 import { migrate } from "drizzle-orm/bun-sqlite/migrator";
 import { existsSync, mkdirSync } from "fs";
-import { Context, Data, Effect, Layer } from "effect";
-
-class DBOpenError extends Data.TaggedError("DBOpenError")<{
-  path: string;
-  cause: unknown;
-}> {}
+import { Context, Effect, Layer } from "effect";
+import { DBError } from "./errors";
 
 const getDbPath = Effect.sync(() => {
   const home = process.env.HOME || "";
@@ -27,7 +23,7 @@ const DBLive = Effect.gen(function* () {
 
   const sqlite = yield* Effect.try({
     try: () => new Database(dbPath),
-    catch: (e) => new DBOpenError({ path: dbPath, cause: e }),
+    catch: (e) => new DBError({ path: dbPath, cause: e }),
   });
 
   const db = drizzle(sqlite);

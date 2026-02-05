@@ -2,15 +2,16 @@ import { Effect } from "effect";
 import { eq, isNull } from "drizzle-orm";
 import { entries, type Entry } from "../db/schema";
 import { parseTime } from "~/lib/time";
-import { InvalidEndTimeError, NoActiveTask, UpdateFailedError } from "./errors";
+import { InvalidEndTimeError, NoActiveTask } from "./errors";
 import { DB } from "~/db";
+import { DBError, DBUpdateFailedError } from "~/db/errors";
 
 const findCurrentActiveTask = () =>
   DB.pipe(
     Effect.flatMap((db) =>
       Effect.try(() =>
         db.select().from(entries).where(isNull(entries.endTime)).limit(1).get(),
-      ),
+      ).pipe(Effect.mapError((e) => new DBError({ cause: e }))),
     ),
   );
 
@@ -24,10 +25,11 @@ const updateTask = (activeTask: Entry, endTime: Date) =>
           .where(eq(entries.id, activeTask.id))
           .returning(),
       ).pipe(
+        Effect.mapError((e) => new DBError({ cause: e })),
         Effect.flatMap(([updated]) =>
           updated
             ? Effect.succeed(updated)
-            : Effect.fail(new UpdateFailedError({ id: "unknown" })),
+            : Effect.fail(new DBUpdateFailedError({ id: "unknown" })),
         ),
       ),
     ),
