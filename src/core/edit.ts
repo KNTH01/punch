@@ -1,6 +1,5 @@
 import { Effect } from "effect";
 import { desc, eq, isNull, like } from "drizzle-orm";
-import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 import { DB } from "~/db";
 import { DBError, DBUpdateFailedError } from "~/db/errors";
 import { entries, type Entry } from "~/db/schema";
@@ -24,11 +23,13 @@ export type EditOptions = {
 /**
  * Find entry by position reference (-1, -2, etc.)
  */
-const findByPosition = (db: BunSQLiteDatabase, position: string) =>
+const findByPosition = (position: string) =>
   Effect.gen(function* () {
+    const db = yield* DB;
+
     const match = position.match(/^-(\d+)$/);
     if (!match || !match[1]) {
-      return yield* Effect.fail(new InvalidPositionFormatError({ position }));
+      return yield* new InvalidPositionFormatError({ position });
     }
 
     const offset = parseInt(match[1]) - 1;
@@ -44,7 +45,7 @@ const findByPosition = (db: BunSQLiteDatabase, position: string) =>
     ).pipe(Effect.mapError((e) => new DBError({ cause: e })));
 
     if (!entry) {
-      return yield* Effect.fail(new EntryNotFoundError({ identifier: position }));
+      return yield* new EntryNotFoundError({ identifier: position });
     }
 
     return entry;
@@ -53,8 +54,10 @@ const findByPosition = (db: BunSQLiteDatabase, position: string) =>
 /**
  * Find entry by ID prefix
  */
-const findByIdPrefix = (db: BunSQLiteDatabase, prefix: string) =>
+const findByIdPrefix = (prefix: string) =>
   Effect.gen(function* () {
+    const db = yield* DB;
+
     const matches = yield* Effect.try(() =>
       db
         .select()
@@ -64,16 +67,14 @@ const findByIdPrefix = (db: BunSQLiteDatabase, prefix: string) =>
     ).pipe(Effect.mapError((e) => new DBError({ cause: e })));
 
     if (matches.length === 0) {
-      return yield* Effect.fail(new EntryNotFoundError({ identifier: prefix }));
+      return yield* new EntryNotFoundError({ identifier: prefix });
     }
 
     if (matches.length > 1) {
-      return yield* Effect.fail(
-        new AmbiguousIdPrefixError({
-          prefix,
-          matches: matches.map((m) => m.id),
-        }),
-      );
+      return yield* new AmbiguousIdPrefixError({
+        prefix,
+        matches: matches.map((m) => m.id),
+      });
     }
 
     return matches[0] as Entry;
@@ -82,8 +83,10 @@ const findByIdPrefix = (db: BunSQLiteDatabase, prefix: string) =>
 /**
  * Find active task or fall back to last entry
  */
-const findActiveOrLast = (db: BunSQLiteDatabase) =>
+const findActiveOrLast = () =>
   Effect.gen(function* () {
+    const db = yield* DB;
+
     let entry = yield* Effect.try(() =>
       db.select().from(entries).where(isNull(entries.endTime)).limit(1).get(),
     ).pipe(Effect.mapError((e) => new DBError({ cause: e })));
@@ -100,7 +103,7 @@ const findActiveOrLast = (db: BunSQLiteDatabase) =>
     }
 
     if (!entry) {
-      return yield* Effect.fail(new NoEntriesToEditError());
+      return yield* new NoEntriesToEditError();
     }
 
     return entry;
@@ -109,16 +112,16 @@ const findActiveOrLast = (db: BunSQLiteDatabase) =>
 /**
  * Resolve target entry based on idOrPosition option
  */
-const resolveTargetEntry = (db: BunSQLiteDatabase, idOrPosition?: string) => {
+const resolveTargetEntry = (idOrPosition?: string) => {
   if (!idOrPosition) {
-    return findActiveOrLast(db);
+    return findActiveOrLast();
   }
 
   if (/^-\d+$/.test(idOrPosition)) {
-    return findByPosition(db, idOrPosition);
+    return findByPosition(idOrPosition);
   }
 
-  return findByIdPrefix(db, idOrPosition);
+  return findByIdPrefix(idOrPosition);
 };
 
 /**
@@ -128,7 +131,7 @@ export const punchEdit = (options: EditOptions = {}) =>
   Effect.gen(function* () {
     const db = yield* DB;
 
-    const entry = yield* resolveTargetEntry(db, options.idOrPosition);
+    const entry = yield* resolveTargetEntry(options.idOrPosition);
 
     // Build updates
     const updates: {
@@ -163,12 +166,10 @@ export const punchEdit = (options: EditOptions = {}) =>
       updates.endTime !== undefined ? updates.endTime : entry.endTime;
 
     if (finalEndTime && finalEndTime <= finalStartTime) {
-      return yield* Effect.fail(
-        new InvalidEndTimeError({
-          startTime: finalStartTime,
-          endTime: finalEndTime,
-        }),
-      );
+      return yield* new InvalidEndTimeError({
+        startTime: finalStartTime,
+        endTime: finalEndTime,
+      });
     }
 
     // Update DB
@@ -181,7 +182,7 @@ export const punchEdit = (options: EditOptions = {}) =>
     ).pipe(Effect.mapError((e) => new DBError({ cause: e })));
 
     if (!updated) {
-      return yield* Effect.fail(new DBUpdateFailedError({ id: entry.id }));
+      return yield* new DBUpdateFailedError({ id: entry.id });
     }
 
     return updated;
