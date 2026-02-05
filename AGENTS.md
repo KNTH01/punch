@@ -7,7 +7,7 @@ Quick reference for AI coding agents working in this repository.
 CLI time tracker built with Bun.
 
 Focus: learning Bun's native APIs (avoid npm deps when Bun has built-ins).
-Focus: learning effect-ts
+Focus: learning effect-ts -- when asking for review about Effect, give hints, but not the whole solution right away, so I can try to implement myself.
 
 ## Build/Test Commands
 
