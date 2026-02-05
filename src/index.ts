@@ -1,5 +1,5 @@
 import { Effect } from "effect";
-import { db } from "./db";
+import { DB, db } from "~/db";
 import { punchIn } from "./core/punch-in";
 import {
   InvalidEndTimeError,
@@ -76,7 +76,12 @@ function parseArgs(args: string[]) {
 async function main() {
   const command = process.argv[2];
 
-  if (!command || command === "help" || command === "--help" || command === "-h") {
+  if (
+    !command ||
+    command === "help" ||
+    command === "--help" ||
+    command === "-h"
+  ) {
     console.log(HELP_TEXT);
     process.exit(0);
   }
@@ -95,19 +100,27 @@ async function main() {
         }
 
         const project = (flags.p || flags.project) as string | undefined;
-        const program = punchIn(db, taskName, { project });
-        const exit = await Effect.runPromiseExit(program);
+        const program = punchIn(taskName, { project });
+
+        const exit = await Effect.runPromiseExit(
+          program.pipe(Effect.provideServiceEffect(DB, DB.Live)),
+        );
 
         if (exit._tag === "Failure") {
           // Extract typed error from Cause
           const cause = exit.cause;
-          if (cause._tag === "Fail" && cause.error instanceof TaskAlreadyRunningError) {
+          if (
+            cause._tag === "Fail" &&
+            cause.error instanceof TaskAlreadyRunningError
+          ) {
             const err = cause.error;
             const time = err.startTime.toLocaleTimeString("en-US", {
               hour: "numeric",
               minute: "2-digit",
             });
-            console.error(`Error: Task already running: "${err.taskName}" started at ${time}`);
+            console.error(
+              `Error: Task already running: "${err.taskName}" started at ${time}`,
+            );
           } else {
             console.error("Error: Failed to start task");
           }
@@ -137,11 +150,16 @@ async function main() {
             if (cause.error instanceof NoActiveTask) {
               console.error("Error: No active task to stop");
             } else if (cause.error instanceof InvalidEndTimeError) {
-              const timeStr = cause.error.startTime.toLocaleTimeString("en-US", {
-                hour: "numeric",
-                minute: "2-digit",
-              });
-              console.error(`Error: End time must be after start time (${timeStr})`);
+              const timeStr = cause.error.startTime.toLocaleTimeString(
+                "en-US",
+                {
+                  hour: "numeric",
+                  minute: "2-digit",
+                },
+              );
+              console.error(
+                `Error: End time must be after start time (${timeStr})`,
+              );
             } else {
               console.error("Error: Failed to stop task");
             }
@@ -153,7 +171,8 @@ async function main() {
 
         const result = exit.value;
         // Calculate duration in minutes
-        const durationMs = result.endTime!.getTime() - result.startTime.getTime();
+        const durationMs =
+          result.endTime!.getTime() - result.startTime.getTime();
         const durationMinutes = Math.floor(durationMs / 1000 / 60);
         const hours = Math.floor(durationMinutes / 60);
         const minutes = durationMinutes % 60;
@@ -181,7 +200,11 @@ async function main() {
             if (arg && !arg.startsWith("--")) {
               // Skip if it's a value for a flag
               const prevArg = rawArgs[i - 1];
-              if (!prevArg || !prevArg.startsWith("-") || /^-\d+$/.test(prevArg)) {
+              if (
+                !prevArg ||
+                !prevArg.startsWith("-") ||
+                /^-\d+$/.test(prevArg)
+              ) {
                 taskName = arg;
                 break;
               }
@@ -199,7 +222,9 @@ async function main() {
           idOrPosition = positional[0];
           taskName = positional[1];
         } else if (positional.length > 2) {
-          throw new Error("Too many arguments. Usage: punch edit [<id-or-position>] [task-name] [--flags]");
+          throw new Error(
+            "Too many arguments. Usage: punch edit [<id-or-position>] [task-name] [--flags]",
+          );
         }
 
         const options: {
@@ -212,7 +237,8 @@ async function main() {
 
         if (idOrPosition) options.idOrPosition = idOrPosition;
         if (taskName) options.taskName = taskName;
-        if (flags.project || flags.p) options.project = (flags.project || flags.p) as string;
+        if (flags.project || flags.p)
+          options.project = (flags.project || flags.p) as string;
         if (flags.start) options.start = flags.start as string;
         if (flags.end) options.end = flags.end as string;
 
@@ -223,7 +249,9 @@ async function main() {
           minute: "2-digit",
         });
         const projectPart = result.project ? ` on ${result.project}` : "";
-        console.log(`✓ Updated '${result.taskName}'${projectPart} starting at ${time}`);
+        console.log(
+          `✓ Updated '${result.taskName}'${projectPart} starting at ${time}`,
+        );
         break;
       }
 

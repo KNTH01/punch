@@ -33,6 +33,7 @@ export class DB extends Context.Tag("DBService")<
   static readonly Live = DBLive;
 }
 
+// TODO: delete this
 export const db = Effect.runSync(DBLive);
 
 // Auto-run migrations on import

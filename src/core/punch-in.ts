@@ -1,22 +1,13 @@
 import { Effect } from "effect";
-import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 import { isNull } from "drizzle-orm";
-import { entries, type Entry } from "../db/schema";
+import { entries } from "../db/schema";
 import { TaskAlreadyRunningError } from "./errors";
+import { DB } from "~/db";
 
-/**
- * Start tracking time for a task.
- *
- * Returns an Effect that:
- * - Succeeds with the created entry
- * - Fails with TaskAlreadyRunningError if a task is already active
- */
-export function punchIn(
-  db: BunSQLiteDatabase,
-  taskName: string,
-  options: { project?: string } = {},
-): Effect.Effect<Entry, TaskAlreadyRunningError> {
-  return Effect.gen(function* () {
+export const punchIn = (taskName: string, options: { project?: string } = {}) =>
+  Effect.gen(function* () {
+    const db = yield* DB;
+
     // Check for active task
     const activeTask = db
       .select()
@@ -48,4 +39,3 @@ export function punchIn(
 
     return entry!;
   });
-}
