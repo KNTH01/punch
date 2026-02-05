@@ -7,22 +7,21 @@ import { DB } from "~/db";
 
 describe("punchIn (Effect)", () => {
   const runTest = <A, E>(program: Effect.Effect<A, E, DB>) =>
+    Effect.runPromise(program.pipe(Effect.provide(DBTest)));
+
+  const runTestExit = <A, E>(program: Effect.Effect<A, E, DB>) =>
     Effect.runPromiseExit(program.pipe(Effect.provide(DBTest)));
 
   test("creates entry when no active task", async () => {
-    const program = punchIn("coding");
-    const exit = await runTest(program);
+    const entry = await runTest(punchIn("coding"));
 
-    expect(exit._tag).toBe("Success");
-    if (exit._tag === "Success") {
-      expect(exit.value.taskName).toBe("coding");
-      expect(exit.value.startTime).toBeInstanceOf(Date);
-      expect(exit.value.endTime).toBeNull();
-    }
+    expect(entry.taskName).toBe("coding");
+    expect(entry.startTime).toBeInstanceOf(Date);
+    expect(entry.endTime).toBeNull();
   });
 
   test("fails with TaskAlreadyRunningError when task is active", async () => {
-    const exit = await runTest(
+    const exit = await runTestExit(
       punchIn("task1").pipe(Effect.andThen(() => punchIn("task2"))),
     );
 
@@ -41,12 +40,8 @@ describe("punchIn (Effect)", () => {
   });
 
   test("creates entry with project when provided", async () => {
-    const program = punchIn("coding", { project: "acme-app" });
-    const exit = await runTest(program);
+    const entry = await runTest(punchIn("coding", { project: "acme-app" }));
 
-    expect(exit._tag).toBe("Success");
-    if (exit._tag === "Success") {
-      expect(exit.value.project).toBe("acme-app");
-    }
+    expect(entry.project).toBe("acme-app");
   });
 });
