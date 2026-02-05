@@ -1,59 +1,96 @@
 import { and, gte, eq } from "drizzle-orm";
-import { entries } from "../db/schema";
-import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
-import { formatTime, formatDuration, type LogEntry } from "../lib/format";
+import { Data, Effect } from "effect";
+import { DB } from "~/db";
+import { DBError } from "~/db/errors";
+import { entries } from "~/db/schema";
+import { formatTime, formatDuration } from "~/lib/format";
 
-export async function punchLog(
-  db: BunSQLiteDatabase,
-  options: {
-    today?: boolean;
-    week?: boolean;
-    month?: boolean;
-    project?: string;
-  } = {},
-): Promise<LogEntry[]> {
+export type LogEntry = {
+  id: string;
+  taskName: string;
+  project: string | null;
+  startTime: Date;
+  endTime: Date | null;
+  duration: number | null;
+  formattedDuration: string;
+  formattedStart: string;
+  formattedEnd: string;
+};
+
+type LogOptions = {
+  today?: boolean;
+  week?: boolean;
+  month?: boolean;
+  project?: string;
+};
+
+class LogOptionsValidationError extends Data.TaggedError(
+  "LogOptionsValidationError",
+)<{ options: LogOptions }> {}
+
+const validateLogOptions = (options: LogOptions) => {
   // Validate mutually exclusive time filters
-  const timeFilters = [options.today, options.week, options.month].filter(Boolean);
+  const timeFilters = [options.today, options.week, options.month].filter(
+    Boolean,
+  );
+
   if (timeFilters.length > 1) {
-    throw new Error("Only one time filter allowed (today/week/month)");
+    return Effect.fail(new LogOptionsValidationError({ options }));
   }
 
-  // Determine time range (default to today)
-  const filterType = options.week ? "week" : options.month ? "month" : "today";
-  const { start } = getDateRange(filterType);
+  return Effect.succeed(options);
+};
 
-  // Build query conditions
-  const conditions = [gte(entries.startTime, start)];
+export const punchLog = (options: LogOptions) =>
+  Effect.gen(function* () {
+    const db = yield* DB;
 
-  if (options.project) {
-    conditions.push(eq(entries.project, options.project));
-  }
+    options = yield* validateLogOptions(options);
 
-  // Query entries
-  const results = db
-    .select()
-    .from(entries)
-    .where(and(...conditions))
-    .orderBy(entries.startTime)
-    .all();
+    // Determine time range (default to today)
+    const filterType = options.week
+      ? "week"
+      : options.month
+        ? "month"
+        : "today";
 
-  // Map to LogEntry objects with computed fields
-  return results.map((entry) => {
-    const duration = entry.endTime ? entry.endTime.getTime() - entry.startTime.getTime() : null;
+    const { start } = getDateRange(filterType);
 
-    return {
-      id: entry.id,
-      taskName: entry.taskName,
-      project: entry.project,
-      startTime: entry.startTime,
-      endTime: entry.endTime,
-      duration,
-      formattedDuration: formatDuration(entry.startTime, entry.endTime),
-      formattedStart: formatTime(entry.startTime),
-      formattedEnd: entry.endTime ? formatTime(entry.endTime) : "",
-    };
+    // Build query conditions
+    const conditions = [gte(entries.startTime, start)];
+    if (options.project) {
+      conditions.push(eq(entries.project, options.project));
+    }
+
+    // Query entries
+    const results = yield* Effect.try(() =>
+      db
+        .select()
+        .from(entries)
+        .where(and(...conditions))
+        .orderBy(entries.startTime)
+        .all(),
+    ).pipe(Effect.mapError((e) => new DBError({ cause: e })));
+
+    // Map to LogEntry objects with computed fields
+    return results.map((entry) => {
+      const duration = entry.endTime
+        ? entry.endTime.getTime() - entry.startTime.getTime()
+        : null;
+
+      return {
+        id: entry.id,
+        taskName: entry.taskName,
+        project: entry.project,
+        startTime: entry.startTime,
+        endTime: entry.endTime,
+        duration,
+        formattedDuration: formatDuration(entry.startTime, entry.endTime),
+        formattedStart: formatTime(entry.startTime),
+        formattedEnd: entry.endTime ? formatTime(entry.endTime) : "",
+      };
+    });
   });
-}
 
 /**
  * Get date range boundaries for time filters

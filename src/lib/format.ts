@@ -1,14 +1,4 @@
-export type LogEntry = {
-  id: string;
-  taskName: string;
-  project: string | null;
-  startTime: Date;
-  endTime: Date | null;
-  duration: number | null;
-  formattedDuration: string;
-  formattedStart: string;
-  formattedEnd: string;
-};
+import type { LogEntry } from "~/core/log";
 
 /**
  * Format time as "2:30pm"
