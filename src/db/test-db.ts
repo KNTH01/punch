@@ -1,8 +1,10 @@
 import { drizzle } from "drizzle-orm/bun-sqlite";
 import { Database } from "bun:sqlite";
 import { migrate } from "drizzle-orm/bun-sqlite/migrator";
+import { Effect, Layer } from "effect";
+import { DB } from ".";
 
-export function createTestDb() {
+function createTestDb() {
   const sqlite = new Database(":memory:");
   const db = drizzle(sqlite);
 
@@ -10,3 +12,8 @@ export function createTestDb() {
 
   return db;
 }
+
+export const DBTest = Layer.effect(
+  DB,
+  Effect.sync(() => createTestDb()),
+);
