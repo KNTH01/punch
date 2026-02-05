@@ -15,3 +15,25 @@ export class InvalidEndTimeError extends Data.TaggedError(
   readonly startTime: Date;
   readonly endTime: Date;
 }> {}
+
+// Edit errors
+export class InvalidPositionFormatError extends Data.TaggedError(
+  "InvalidPositionFormatError",
+)<{
+  readonly position: string;
+}> {}
+
+export class EntryNotFoundError extends Data.TaggedError("EntryNotFoundError")<{
+  readonly identifier: string;
+}> {}
+
+export class AmbiguousIdPrefixError extends Data.TaggedError(
+  "AmbiguousIdPrefixError",
+)<{
+  readonly prefix: string;
+  readonly matches: string[];
+}> {}
+
+export class NoEntriesToEditError extends Data.TaggedError(
+  "NoEntriesToEditError",
+)<{}> {}

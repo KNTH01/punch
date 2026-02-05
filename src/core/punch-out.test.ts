@@ -43,18 +43,17 @@ describe("punchOut", () => {
   });
 
   test("accepts custom end time with --at option", async () => {
-    // Use a time that's definitely in the future relative to now
+    // Use a full datetime that's definitely in the future
     const futureTime = new Date();
-    futureTime.setHours(futureTime.getHours() + 1);
-    const futureHour = futureTime.getHours();
-    const atTime = `${futureHour}:30`;
+    futureTime.setMinutes(futureTime.getMinutes() + 5);
+    const atTime = `${futureTime.getFullYear()}-${String(futureTime.getMonth() + 1).padStart(2, "0")}-${String(futureTime.getDate()).padStart(2, "0")} ${String(futureTime.getHours()).padStart(2, "0")}:${String(futureTime.getMinutes()).padStart(2, "0")}`;
 
     const entry = await runTest(
       punchIn("Fix bug").pipe(Effect.andThen(() => punchOut({ at: atTime }))),
     );
 
-    expect(entry.endTime?.getHours()).toBe(futureHour);
-    expect(entry.endTime?.getMinutes()).toBe(30);
+    expect(entry.endTime?.getHours()).toBe(futureTime.getHours());
+    expect(entry.endTime?.getMinutes()).toBe(futureTime.getMinutes());
   });
 
   test("fails with InvalidEndTimeError when end time before start time", async () => {
