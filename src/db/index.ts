@@ -2,9 +2,14 @@ import { drizzle } from "drizzle-orm/bun-sqlite";
 import { Database } from "bun:sqlite";
 import { migrate } from "drizzle-orm/bun-sqlite/migrator";
 import { existsSync, mkdirSync } from "fs";
-import { Context, Effect } from "effect";
+import { Context, Data, Effect, Layer } from "effect";
 
-function getDbPath(): string {
+class DBOpenError extends Data.TaggedError("DBOpenError")<{
+  path: string;
+  cause: unknown;
+}> {}
+
+const getDbPath = Effect.sync(() => {
   const home = process.env.HOME || "";
   const xdgDataHome = process.env.XDG_DATA_HOME || `${home}/.local/share`;
   const dataDir = `${xdgDataHome}/punch`;
@@ -15,11 +20,15 @@ function getDbPath(): string {
   }
 
   return `${dataDir}/punch.db`;
-}
+});
 
-const DBLive = Effect.sync(() => {
-  const dbPath = getDbPath();
-  const sqlite = new Database(dbPath);
+const DBLive = Effect.gen(function* () {
+  const dbPath = yield* getDbPath;
+
+  const sqlite = yield* Effect.try({
+    try: () => new Database(dbPath),
+    catch: (e) => new DBOpenError({ path: dbPath, cause: e }),
+  });
 
   const db = drizzle(sqlite);
 
@@ -30,7 +39,7 @@ export class DB extends Context.Tag("DBService")<
   DB,
   Effect.Effect.Success<typeof DBLive>
 >() {
-  static readonly Live = DBLive;
+  static readonly Live = Layer.effect(DB, DBLive);
 }
 
 // TODO: delete this

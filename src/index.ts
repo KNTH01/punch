@@ -103,7 +103,7 @@ async function main() {
         const program = punchIn(taskName, { project });
 
         const exit = await Effect.runPromiseExit(
-          program.pipe(Effect.provideServiceEffect(DB, DB.Live)),
+          program.pipe(Effect.provide(DB.Live)),
         );
 
         if (exit._tag === "Failure") {
