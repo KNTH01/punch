@@ -9,12 +9,9 @@ export const punchIn = (taskName: string, options: { project?: string } = {}) =>
     const db = yield* DB;
 
     // Check for active task
-    const activeTask = db
-      .select()
-      .from(entries)
-      .where(isNull(entries.endTime))
-      .limit(1)
-      .get();
+    const activeTask = yield* Effect.try(() =>
+      db.select().from(entries).where(isNull(entries.endTime)).limit(1).get(),
+    );
 
     if (activeTask) {
       return yield* new TaskAlreadyRunningError({
@@ -25,7 +22,7 @@ export const punchIn = (taskName: string, options: { project?: string } = {}) =>
 
     const now = new Date();
 
-    const [entry] = yield* Effect.promise(() =>
+    const [entry] = yield* Effect.tryPromise(() =>
       db
         .insert(entries)
         .values({
@@ -37,5 +34,5 @@ export const punchIn = (taskName: string, options: { project?: string } = {}) =>
         .returning(),
     );
 
-    return entry!;
+    return entry;
   });
