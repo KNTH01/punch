@@ -17,12 +17,6 @@ export class InvalidEndTimeError extends Data.TaggedError(
 }> {}
 
 // Edit errors
-export class InvalidPositionFormatError extends Data.TaggedError(
-  "InvalidPositionFormatError",
-)<{
-  readonly position: string;
-}> {}
-
 export class EntryNotFoundError extends Data.TaggedError("EntryNotFoundError")<{
   readonly identifier: string;
 }> {}

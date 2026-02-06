@@ -5,7 +5,6 @@ import { DBError, DBUpdateFailedError } from "~/db/errors";
 import { entries, type Entry } from "~/db/schema";
 import { parseTime } from "~/lib/time";
 import {
-  InvalidPositionFormatError,
   EntryNotFoundError,
   AmbiguousIdPrefixError,
   NoEntriesToEditError,
@@ -22,17 +21,14 @@ export type EditOptions = {
 
 /**
  * Find entry by position reference (-1, -2, etc.)
+ * Assumes position is already validated by resolveTargetEntry
  */
 const findByPosition = (position: string) =>
   Effect.gen(function* () {
     const db = yield* DB;
 
-    const match = position.match(/^-(\d+)$/);
-    if (!match || !match[1]) {
-      return yield* new InvalidPositionFormatError({ position });
-    }
-
-    const offset = parseInt(match[1]) - 1;
+    const num = parseInt(position.slice(1));
+    const offset = num - 1;
 
     const entry = yield* Effect.try(() =>
       db
