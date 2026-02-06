@@ -1,29 +1,21 @@
 import { Effect } from "effect";
-import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 import { isNull } from "drizzle-orm";
 import { entries, type Entry } from "../db/schema";
 import { TaskAlreadyRunningError } from "./errors";
+import { DB } from "~/db";
+import { DBError } from "~/db/errors";
 
-/**
- * Start tracking time for a task.
- *
- * Returns an Effect that:
- * - Succeeds with the created entry
- * - Fails with TaskAlreadyRunningError if a task is already active
- */
-export function punchIn(
-  db: BunSQLiteDatabase,
+export const punchIn = (
   taskName: string,
   options: { project?: string } = {},
-): Effect.Effect<Entry, TaskAlreadyRunningError> {
-  return Effect.gen(function* () {
+): Effect.Effect<Entry, TaskAlreadyRunningError | DBError, DB> =>
+  Effect.gen(function* () {
+    const db = yield* DB;
+
     // Check for active task
-    const activeTask = db
-      .select()
-      .from(entries)
-      .where(isNull(entries.endTime))
-      .limit(1)
-      .get();
+    const activeTask = yield* Effect.try(() =>
+      db.select().from(entries).where(isNull(entries.endTime)).limit(1).get(),
+    ).pipe(Effect.mapError((e) => new DBError({ cause: e })));
 
     if (activeTask) {
       return yield* new TaskAlreadyRunningError({
@@ -34,7 +26,7 @@ export function punchIn(
 
     const now = new Date();
 
-    const [entry] = yield* Effect.promise(() =>
+    const [entry] = yield* Effect.tryPromise(() =>
       db
         .insert(entries)
         .values({
@@ -44,8 +36,13 @@ export function punchIn(
           endTime: null,
         })
         .returning(),
-    );
+    ).pipe(Effect.mapError((e) => new DBError({ cause: e })));
 
-    return entry!;
+    if (!entry) {
+      return yield* new DBError({
+        cause: "Inserting into DB without returning value",
+      });
+    }
+
+    return entry;
   });
-}

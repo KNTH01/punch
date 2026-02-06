@@ -15,9 +15,8 @@
     "verbatimModuleSyntax": true,
     "noEmit": true,
     // Path aliases
-    "baseUrl": ".",
     "paths": {
-      "~/*": ["src/*"]
+      "~/*": ["./src/*"]
     },
     // Best practices
     "strict": true,

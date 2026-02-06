@@ -1,15 +1,11 @@
 import { Effect } from "effect";
-import { db } from "./db";
-import { punchIn } from "./core/punch-in";
-import {
-  InvalidEndTimeError,
-  NoActiveTask,
-  TaskAlreadyRunningError,
-} from "./core/errors";
-import { punchLog } from "./commands/log";
+import { DB } from "~/db";
+import { punchIn } from "~/core/punch-in";
+import { punchEdit } from "~/core/punch-edit";
 import { punchOut } from "~/core/punch-out";
-import { punchEdit } from "./commands/edit";
-import { formatLogTable } from "./lib/format";
+import { punchLog } from "~/core/punch-log";
+import { formatLogTable } from "~/lib/format";
+import { formatCliError } from "~/lib/format-error";
 
 const HELP_TEXT = `
 Usage: punch <command> [options]
@@ -76,13 +72,17 @@ function parseArgs(args: string[]) {
 async function main() {
   const command = process.argv[2];
 
-  if (!command || command === "help" || command === "--help" || command === "-h") {
+  if (
+    !command ||
+    command === "help" ||
+    command === "--help" ||
+    command === "-h"
+  ) {
     console.log(HELP_TEXT);
     process.exit(0);
   }
 
-  try {
-    switch (command) {
+  switch (command) {
       case "in":
       case "start": {
         const { flags, positional } = parseArgs(process.argv.slice(3));
@@ -95,23 +95,16 @@ async function main() {
         }
 
         const project = (flags.p || flags.project) as string | undefined;
-        const program = punchIn(db, taskName, { project });
-        const exit = await Effect.runPromiseExit(program);
+        const program = punchIn(taskName, { project });
+
+        const exit = await Effect.runPromiseExit(
+          program.pipe(Effect.provide(DB.Live)),
+        );
 
         if (exit._tag === "Failure") {
-          // Extract typed error from Cause
-          const cause = exit.cause;
-          if (cause._tag === "Fail" && cause.error instanceof TaskAlreadyRunningError) {
-            const err = cause.error;
-            const time = err.startTime.toLocaleTimeString("en-US", {
-              hour: "numeric",
-              minute: "2-digit",
-            });
-            console.error(`Error: Task already running: "${err.taskName}" started at ${time}`);
-          } else {
-            console.error("Error: Failed to start task");
-          }
-          process.exit(1);
+          const [message, code] = formatCliError(exit.cause);
+          console.error(`Error: ${message}`);
+          process.exit(code);
         }
 
         const result = exit.value;
@@ -129,31 +122,20 @@ async function main() {
         const { flags } = parseArgs(process.argv.slice(3));
         const at = (flags.a || flags.at) as string | undefined;
 
-        const exit = await Effect.runPromiseExit(punchOut(db, { at }));
+        const exit = await Effect.runPromiseExit(
+          punchOut({ at }).pipe(Effect.provide(DB.Live)),
+        );
 
         if (exit._tag === "Failure") {
-          const cause = exit.cause;
-          if (cause._tag === "Fail") {
-            if (cause.error instanceof NoActiveTask) {
-              console.error("Error: No active task to stop");
-            } else if (cause.error instanceof InvalidEndTimeError) {
-              const timeStr = cause.error.startTime.toLocaleTimeString("en-US", {
-                hour: "numeric",
-                minute: "2-digit",
-              });
-              console.error(`Error: End time must be after start time (${timeStr})`);
-            } else {
-              console.error("Error: Failed to stop task");
-            }
-          } else {
-            console.error("Error: Failed to stop task");
-          }
-          process.exit(1);
+          const [message, code] = formatCliError(exit.cause);
+          console.error(`Error: ${message}`);
+          process.exit(code);
         }
 
         const result = exit.value;
         // Calculate duration in minutes
-        const durationMs = result.endTime!.getTime() - result.startTime.getTime();
+        const durationMs =
+          result.endTime!.getTime() - result.startTime.getTime();
         const durationMinutes = Math.floor(durationMs / 1000 / 60);
         const hours = Math.floor(durationMinutes / 60);
         const minutes = durationMinutes % 60;
@@ -181,7 +163,11 @@ async function main() {
             if (arg && !arg.startsWith("--")) {
               // Skip if it's a value for a flag
               const prevArg = rawArgs[i - 1];
-              if (!prevArg || !prevArg.startsWith("-") || /^-\d+$/.test(prevArg)) {
+              if (
+                !prevArg ||
+                !prevArg.startsWith("-") ||
+                /^-\d+$/.test(prevArg)
+              ) {
                 taskName = arg;
                 break;
               }
@@ -199,7 +185,10 @@ async function main() {
           idOrPosition = positional[0];
           taskName = positional[1];
         } else if (positional.length > 2) {
-          throw new Error("Too many arguments. Usage: punch edit [<id-or-position>] [task-name] [--flags]");
+          console.error(
+            "Error: Too many arguments. Usage: punch edit [<id-or-position>] [task-name] [--flags]",
+          );
+          process.exit(1);
         }
 
         const options: {
@@ -212,18 +201,31 @@ async function main() {
 
         if (idOrPosition) options.idOrPosition = idOrPosition;
         if (taskName) options.taskName = taskName;
-        if (flags.project || flags.p) options.project = (flags.project || flags.p) as string;
+        if (flags.project || flags.p)
+          options.project = (flags.project || flags.p) as string;
         if (flags.start) options.start = flags.start as string;
         if (flags.end) options.end = flags.end as string;
 
-        const result = await punchEdit(db, options);
+        const exit = await Effect.runPromiseExit(
+          punchEdit(options).pipe(Effect.provide(DB.Live)),
+        );
 
+        if (exit._tag === "Failure") {
+          const [message, code] = formatCliError(exit.cause);
+          console.error(`Error: ${message}`);
+          process.exit(code);
+        }
+
+        const result = exit.value;
         const time = result.startTime.toLocaleTimeString("en-US", {
           hour: "numeric",
           minute: "2-digit",
         });
         const projectPart = result.project ? ` on ${result.project}` : "";
-        console.log(`✓ Updated '${result.taskName}'${projectPart} starting at ${time}`);
+        console.log(
+          `✓ Updated '${result.taskName}'${projectPart} starting at ${time}`,
+        );
+
         break;
       }
 
@@ -244,8 +246,18 @@ async function main() {
         const project = (flags.p || flags.project) as string | undefined;
         if (project) filters.project = project;
 
-        const entries = await punchLog(db, filters);
-        console.log(formatLogTable(entries));
+        const exit = await Effect.runPromiseExit(
+          punchLog(filters).pipe(Effect.provide(DB.Live)),
+        );
+
+        if (exit._tag === "Failure") {
+          const [message, code] = formatCliError(exit.cause);
+          console.error(`Error: ${message}`);
+          process.exit(code);
+        }
+
+        console.log(formatLogTable(exit.value));
+
         break;
       }
 
@@ -259,14 +271,6 @@ async function main() {
         console.error(`Error: Unknown command '${command}'`);
         console.log(HELP_TEXT);
         process.exit(1);
-    }
-  } catch (error) {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-    } else {
-      console.error(`Error: ${String(error)}`);
-    }
-    process.exit(1);
   }
 }
 

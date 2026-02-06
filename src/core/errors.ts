@@ -9,11 +9,25 @@ export class TaskAlreadyRunningError extends Data.TaggedError(
 
 export class NoActiveTask extends Data.TaggedError("NoActiveTask") {}
 
-export class InvalidEndTimeError extends Data.TaggedError("InvalidEndTimeError")<{
+export class InvalidEndTimeError extends Data.TaggedError(
+  "InvalidEndTimeError",
+)<{
   readonly startTime: Date;
   readonly endTime: Date;
 }> {}
 
-export class UpdateFailedError extends Data.TaggedError("UpdateFailedError")<{
-  readonly id: string;
+// Edit errors
+export class EntryNotFoundError extends Data.TaggedError("EntryNotFoundError")<{
+  readonly identifier: string;
 }> {}
+
+export class AmbiguousIdPrefixError extends Data.TaggedError(
+  "AmbiguousIdPrefixError",
+)<{
+  readonly prefix: string;
+  readonly matches: string[];
+}> {}
+
+export class NoEntriesToEditError extends Data.TaggedError(
+  "NoEntriesToEditError",
+)<{}> {}

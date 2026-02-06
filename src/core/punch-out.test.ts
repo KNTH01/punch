@@ -1,67 +1,88 @@
-import { test, expect, beforeEach, describe } from "bun:test";
-import { Effect, Exit } from "effect";
-import { createTestDb } from "../db/test-db";
+import { test, expect, describe } from "bun:test";
+import { Cause, Effect } from "effect";
+import { DBTest, withDB } from "~/db/test-db";
+import { DB } from "~/db";
 import { punchIn } from "~/core/punch-in";
 import { punchOut } from "~/core/punch-out";
 import { entries } from "~/db/schema";
 import { InvalidEndTimeError, NoActiveTask } from "~/core/errors";
 
-describe("punch out", () => {
-  let db: ReturnType<typeof createTestDb>;
+describe("punchOut", () => {
+  const runTest = <A, E>(program: Effect.Effect<A, E, DB>) =>
+    Effect.runPromise(program.pipe(Effect.provide(DBTest)));
 
-  beforeEach(() => {
-    db = createTestDb();
-  });
+  const runTestExit = <A, E>(program: Effect.Effect<A, E, DB>) =>
+    Effect.runPromiseExit(program.pipe(Effect.provide(DBTest)));
 
   test("sets end time on active task", async () => {
-    await Effect.runPromise(punchIn(db, "Fix bug"));
-
-    // Wait 1ms to ensure different timestamp
-    await Bun.sleep(1);
-
-    await Effect.runPromise(punchOut(db));
-
-    const entry = db.select().from(entries).get();
-    expect(entry?.endTime).toBeInstanceOf(Date);
-    expect(entry?.endTime?.getTime()).toBeGreaterThan(
-      entry?.startTime.getTime() || 0,
+    const entry = await runTest(
+      punchIn("Fix bug").pipe(
+        Effect.andThen(() => Bun.sleep(1)),
+        Effect.andThen(() => punchOut()),
+      ),
     );
+
+    expect(entry.endTime).toBeInstanceOf(Date);
+    expect(entry.endTime!.getTime()).toBeGreaterThan(entry.startTime.getTime());
   });
 
   test("fails with NoActiveTask if no active task", async () => {
-    const exit = await Effect.runPromiseExit(punchOut(db));
-    expect(Exit.isFailure(exit)).toBe(true);
-    if (Exit.isFailure(exit)) {
-      const error = exit.cause.toString();
-      expect(error).toContain("NoActiveTask");
+    const exit = await runTestExit(punchOut());
+
+    expect(exit._tag).toBe("Failure");
+
+    if (exit._tag === "Failure") {
+      const error = Cause.failureOption(exit.cause);
+
+      expect(error._tag).toBe("Some");
+
+      if (error._tag === "Some") {
+        expect(error.value).toBeInstanceOf(NoActiveTask);
+      }
     }
   });
 
   test("accepts custom end time with --at option", async () => {
-    await Effect.runPromise(punchIn(db, "Fix bug"));
-    await Effect.runPromise(punchOut(db, { at: "14:30" }));
+    // Use a full datetime that's definitely in the future
+    const futureTime = new Date();
+    futureTime.setMinutes(futureTime.getMinutes() + 5);
+    const atTime = `${futureTime.getFullYear()}-${String(futureTime.getMonth() + 1).padStart(2, "0")}-${String(futureTime.getDate()).padStart(2, "0")} ${String(futureTime.getHours()).padStart(2, "0")}:${String(futureTime.getMinutes()).padStart(2, "0")}`;
 
-    const entry = db.select().from(entries).get();
-    expect(entry?.endTime?.getHours()).toBe(14);
-    expect(entry?.endTime?.getMinutes()).toBe(30);
+    const entry = await runTest(
+      punchIn("Fix bug").pipe(Effect.andThen(() => punchOut({ at: atTime }))),
+    );
+
+    expect(entry.endTime?.getHours()).toBe(futureTime.getHours());
+    expect(entry.endTime?.getMinutes()).toBe(futureTime.getMinutes());
   });
 
   test("fails with InvalidEndTimeError when end time before start time", async () => {
-    // Insert task that started at 14:00 today
-    const startTime = new Date();
-    startTime.setHours(14, 0, 0, 0);
-    await db.insert(entries).values({
-      taskName: "Fix bug",
-      startTime,
-      endTime: null,
-    });
+    // Set up: startTime in future (hour + 2), try to end at hour + 1 (before start)
+    const now = new Date();
+    const futureHour = now.getHours() + 2;
+    const earlierHour = now.getHours() + 1;
+    const startTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), futureHour, 0, 0);
 
-    // Try to end at 12:00 (before 14:00)
-    const exit = await Effect.runPromiseExit(punchOut(db, { at: "12:00" }));
-    expect(Exit.isFailure(exit)).toBe(true);
-    if (Exit.isFailure(exit)) {
-      const error = exit.cause.toString();
-      expect(error).toContain("InvalidEndTimeError");
+    const program = withDB((db) => {
+      db.insert(entries).values({
+        taskName: "Fix bug",
+        startTime,
+        endTime: null,
+      }).run();
+    }).pipe(Effect.andThen(() => punchOut({ at: `${earlierHour}:00` })));
+
+    const exit = await runTestExit(program);
+
+    expect(exit._tag).toBe("Failure");
+
+    if (exit._tag === "Failure") {
+      const error = Cause.failureOption(exit.cause);
+
+      expect(error._tag).toBe("Some");
+
+      if (error._tag === "Some") {
+        expect(error.value).toBeInstanceOf(InvalidEndTimeError);
+      }
     }
   });
 });
