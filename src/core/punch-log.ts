@@ -44,7 +44,9 @@ const validateLogOptions = (options: LogOptions) => {
   return Effect.succeed(options);
 };
 
-export const punchLog = (options: LogOptions = {}) =>
+export const punchLog = (
+  options: LogOptions = {},
+): Effect.Effect<LogEntry[], LogOptionsValidationError | DBError, DB> =>
   Effect.gen(function* () {
     const db = yield* DB;
 

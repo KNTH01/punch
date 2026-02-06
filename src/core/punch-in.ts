@@ -1,18 +1,21 @@
 import { Effect } from "effect";
 import { isNull } from "drizzle-orm";
-import { entries } from "../db/schema";
+import { entries, type Entry } from "../db/schema";
 import { TaskAlreadyRunningError } from "./errors";
 import { DB } from "~/db";
 import { DBError } from "~/db/errors";
 
-export const punchIn = (taskName: string, options: { project?: string } = {}) =>
+export const punchIn = (
+  taskName: string,
+  options: { project?: string } = {},
+): Effect.Effect<Entry, TaskAlreadyRunningError | DBError, DB> =>
   Effect.gen(function* () {
     const db = yield* DB;
 
     // Check for active task
     const activeTask = yield* Effect.try(() =>
       db.select().from(entries).where(isNull(entries.endTime)).limit(1).get(),
-    );
+    ).pipe(Effect.mapError((e) => new DBError({ cause: e })));
 
     if (activeTask) {
       return yield* new TaskAlreadyRunningError({
@@ -33,7 +36,7 @@ export const punchIn = (taskName: string, options: { project?: string } = {}) =>
           endTime: null,
         })
         .returning(),
-    );
+    ).pipe(Effect.mapError((e) => new DBError({ cause: e })));
 
     if (!entry) {
       return yield* new DBError({

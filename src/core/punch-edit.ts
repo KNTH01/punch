@@ -123,7 +123,18 @@ const resolveTargetEntry = (idOrPosition?: string) => {
 /**
  * Edit an existing time entry
  */
-export const punchEdit = (options: EditOptions = {}) =>
+export const punchEdit = (
+  options: EditOptions = {},
+): Effect.Effect<
+  Entry,
+  | EntryNotFoundError
+  | AmbiguousIdPrefixError
+  | NoEntriesToEditError
+  | InvalidEndTimeError
+  | DBError
+  | DBUpdateFailedError,
+  DB
+> =>
   Effect.gen(function* () {
     const db = yield* DB;
 

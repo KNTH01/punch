@@ -42,7 +42,13 @@ const validateEndTime = (startTime: Date, endTime: Date) => {
   return Effect.succeed(endTime);
 };
 
-export const punchOut = (options: { at?: string } = {}) =>
+export const punchOut = (
+  options: { at?: string } = {},
+): Effect.Effect<
+  Entry,
+  NoActiveTask | InvalidEndTimeError | DBError | DBUpdateFailedError,
+  DB
+> =>
   findCurrentActiveTask().pipe(
     Effect.flatMap((activeTask) =>
       activeTask ? Effect.succeed(activeTask) : Effect.fail(new NoActiveTask()),
