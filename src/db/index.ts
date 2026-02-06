@@ -1,21 +1,21 @@
 import { drizzle } from "drizzle-orm/bun-sqlite";
 import { Database } from "bun:sqlite";
-import { migrate } from "drizzle-orm/bun-sqlite/migrator";
 import { existsSync, mkdirSync } from "fs";
+import { join } from "path";
 import { Context, Effect, Layer } from "effect";
 import { DBError } from "./errors";
+import { getDataDir } from "~/lib/paths";
+import { runMigrations } from "./migrator";
+import { migrations } from "./migrations";
 
 const getDbPath = Effect.sync(() => {
-  const home = process.env.HOME || "";
-  const xdgDataHome = process.env.XDG_DATA_HOME || `${home}/.local/share`;
-  const dataDir = `${xdgDataHome}/punch`;
+  const dataDir = getDataDir();
 
-  // Create directory if it doesn't exist
   if (!existsSync(dataDir)) {
     mkdirSync(dataDir, { recursive: true });
   }
 
-  return `${dataDir}/punch.db`;
+  return join(dataDir, "punch.db");
 });
 
 const DBLive = Effect.gen(function* () {
@@ -25,6 +25,9 @@ const DBLive = Effect.gen(function* () {
     try: () => new Database(dbPath),
     catch: (e) => new DBError({ path: dbPath, cause: e }),
   });
+
+  // Auto-migrate on connection — idempotent, safe on every startup
+  yield* runMigrations(sqlite, migrations);
 
   const db = drizzle(sqlite);
 
@@ -37,9 +40,3 @@ export class DB extends Context.Tag("DBService")<
 >() {
   static readonly Live = Layer.effect(DB, DBLive);
 }
-
-/** Run migrations - exported for migrate.ts script */
-export const runMigrations = Effect.gen(function* () {
-  const db = yield* DBLive;
-  migrate(db, { migrationsFolder: "./drizzle" });
-});

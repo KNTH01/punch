@@ -1,10 +1,12 @@
-import { defineConfig } from 'drizzle-kit';
+import { join } from "path";
+import { defineConfig } from "drizzle-kit";
+import { getDataDir } from "./src/lib/paths";
 
 export default defineConfig({
-  schema: './src/db/schema.ts',
-  out: './drizzle',
-  dialect: 'sqlite',
+  schema: "./src/db/schema.ts",
+  out: "./drizzle",
+  dialect: "sqlite",
   dbCredentials: {
-    url: 'file:///home/knth/.local/share/punch/punch.db'
-  }
+    url: `file://${join(getDataDir(), "punch.db")}`,
+  },
 });
