@@ -38,9 +38,8 @@ export class DB extends Context.Tag("DBService")<
   static readonly Live = Layer.effect(DB, DBLive);
 }
 
-// TODO: delete this
-export const db = Effect.runSync(DBLive);
-
-// Auto-run migrations on import
-// TODO: why do we need this?
-migrate(db, { migrationsFolder: "./drizzle" });
+/** Run migrations - exported for migrate.ts script */
+export const runMigrations = Effect.gen(function* () {
+  const db = yield* DBLive;
+  migrate(db, { migrationsFolder: "./drizzle" });
+});
