@@ -1,2 +1,52 @@
 [tools]
 bun = "latest"
+
+[tasks.run]
+description = "Run CLI in development"
+run = "bun run src/index.ts"
+raw = true
+
+[tasks.test]
+description = "Run tests"
+run = "bun test"
+raw = true
+
+[tasks.typecheck]
+description = "TypeScript type checking"
+run = "bun run typecheck"
+
+[tasks.lint]
+description = "Run oxlint"
+run = "bun run lint"
+
+[tasks.format]
+description = "Run oxfmt"
+run = "bun run format"
+
+[tasks.build]
+description = "Compile standalone binary"
+run = "bun run build"
+
+[tasks."build-all"]
+description = "Cross-compile for all platforms"
+run = """
+mkdir -p dist
+bun build --compile --minify --sourcemap --bytecode --target=bun-linux-x64 src/index.ts --outfile dist/punch-linux-x64
+bun build --compile --minify --sourcemap --bytecode --target=bun-linux-arm64 src/index.ts --outfile dist/punch-linux-arm64
+bun build --compile --minify --sourcemap --bytecode --target=bun-darwin-arm64 src/index.ts --outfile dist/punch-darwin-arm64
+bun build --compile --minify --sourcemap --bytecode --target=bun-darwin-x64 src/index.ts --outfile dist/punch-darwin-x64
+bun build --compile --minify --sourcemap --bytecode --target=bun-windows-x64 src/index.ts --outfile dist/punch-windows-x64.exe
+"""
+
+[tasks.install]
+description = "Build and install to ~/.local/bin"
+depends = ["build"]
+run = "cp punch ~/.local/bin/"
+
+[tasks."db:migrate"]
+description = "Run database migrations"
+run = "bun run db:migrate"
+
+[tasks."db:studio"]
+description = "Open Drizzle Studio"
+run = "bun run db:studio"

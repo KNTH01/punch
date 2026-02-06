@@ -2,20 +2,34 @@
 
 A fast, simple CLI time tracker built with Bun.
 
-## Quick Start
+## Installation
+
+### With mise (recommended)
 
 ```bash
-# Install dependencies
+git clone https://github.com/knth/punch.git
+cd punch
+mise install        # installs correct Bun version
+bun install         # install dependencies
+mise run build      # compile binary
+mise run install    # copy to ~/.local/bin
+```
+
+### Manual
+
+```bash
+git clone https://github.com/knth/punch.git
+cd punch
 bun install
+bun run build
+cp punch ~/.local/bin/
+```
 
-# Start tracking time
-bun run index.ts in "Fix bug" -p project-name
+### Cross-platform binaries
 
-# Stop tracking
-bun run index.ts out
-
-# View entries
-bun run index.ts log
+```bash
+mise run build-all
+ls dist/            # punch-linux-x64, punch-darwin-arm64, etc.
 ```
 
 ## Commands
@@ -28,10 +42,15 @@ bun run index.ts log
 ## Development
 
 ```bash
-bun test              # Run tests
-bun run typecheck     # TypeScript checks
-bun run migrate       # Run database migrations
+mise run test          # Run tests
+mise run typecheck     # TypeScript checks
+mise run lint          # Run oxlint
+mise run format        # Run oxfmt
+mise run db:migrate    # Run database migrations
+mise run db:studio     # Open Drizzle Studio
 ```
+
+All tasks also work via `bun run <script>` directly.
 
 See [docs/](docs/) for detailed documentation, architecture, and current development status.
 
@@ -40,6 +59,7 @@ See [docs/](docs/) for detailed documentation, architecture, and current develop
 - **Runtime:** Bun
 - **Database:** SQLite via `bun:sqlite` + Drizzle ORM
 - **Testing:** `bun:test`
+- **Task runner:** mise
 
 ---
 

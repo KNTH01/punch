@@ -23,7 +23,7 @@ bun test --watch                      # Watch mode
 bun run typecheck                     # TypeScript type checking
 
 # Database
-bun run migrate                       # Run migrations
+bun run db:migrate                    # Run migrations
 bun run db:studio                     # Open Drizzle Studio
 
 # Quality
@@ -31,7 +31,7 @@ bun run lint                          # Run oxlint
 bun run format                        # Run oxfmt
 
 # Build
-bun build src/index.ts --compile --outfile punch
+bun run build                         # Compile standalone binary
 ```
 
 ## Test-Driven Development (MANDATORY)

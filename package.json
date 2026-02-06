@@ -4,12 +4,12 @@
   "type": "module",
   "module": "index.ts",
   "scripts": {
-    "migrate": "bun run migrate.ts",
+    "db:migrate": "bun run migrate.ts",
     "db:studio": "drizzle-kit studio --config=drizzle.config.ts",
     "typecheck": "bun --bun tsc --noEmit",
     "lint": "oxlint --type-aware --fix",
     "format": "oxfmt",
-    "build": "bun build src/index.ts --compile --outfile punch",
+    "build": "bun build --compile --minify --sourcemap --bytecode src/index.ts --outfile punch",
     "test": "bun test"
   },
   "dependencies": {
