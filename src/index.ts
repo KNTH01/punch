@@ -1,5 +1,5 @@
 import { Effect, Exit } from "effect";
-import { DB, db } from "~/db";
+import { DB } from "~/db";
 import {
   InvalidEndTimeError,
   NoActiveTask,
