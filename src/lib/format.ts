@@ -1,4 +1,4 @@
-import type { LogEntry } from "~/core/log";
+import type { LogEntry } from "~/core/punch-log";
 
 /**
  * Format time as "2:30pm"
@@ -77,10 +77,19 @@ export function formatLogTable(entries: LogEntry[]): string {
   // Calculate column widths
   const idWidth = 8; // Show first 8 chars of ID
   const taskWidth = Math.max(4, ...entries.map((e) => e.taskName.length));
-  const projectWidth = Math.max(7, ...entries.map((e) => (e.project || "").length));
-  const startWidth = Math.max(5, ...entries.map((e) => e.formattedStart.length));
+  const projectWidth = Math.max(
+    7,
+    ...entries.map((e) => (e.project || "").length),
+  );
+  const startWidth = Math.max(
+    5,
+    ...entries.map((e) => e.formattedStart.length),
+  );
   const endWidth = Math.max(3, ...entries.map((e) => e.formattedEnd.length));
-  const durationWidth = Math.max(8, ...entries.map((e) => e.formattedDuration.length));
+  const durationWidth = Math.max(
+    8,
+    ...entries.map((e) => e.formattedDuration.length),
+  );
 
   // Build header
   const header = [

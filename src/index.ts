@@ -1,15 +1,15 @@
-import { Effect } from "effect";
+import { Effect, Exit } from "effect";
 import { DB, db } from "~/db";
-import { punchIn } from "./core/punch-in";
 import {
   InvalidEndTimeError,
   NoActiveTask,
   TaskAlreadyRunningError,
-} from "./core/errors";
-import { punchLog } from "./commands/log";
+} from "~/core/errors";
+import { punchIn } from "~/core/punch-in";
+import { punchEdit } from "~/core/punch-edit";
 import { punchOut } from "~/core/punch-out";
-import { punchEdit } from "./commands/edit";
-import { formatLogTable } from "./lib/format";
+import { formatLogTable } from "~/lib/format";
+import { punchLog } from "./core/punch-log";
 
 const HELP_TEXT = `
 Usage: punch <command> [options]
@@ -142,7 +142,9 @@ async function main() {
         const { flags } = parseArgs(process.argv.slice(3));
         const at = (flags.a || flags.at) as string | undefined;
 
-        const exit = await Effect.runPromiseExit(punchOut(db, { at }));
+        const exit = await Effect.runPromiseExit(
+          punchOut({ at }).pipe(Effect.provide(DB.Live)),
+        );
 
         if (exit._tag === "Failure") {
           const cause = exit.cause;
@@ -242,16 +244,24 @@ async function main() {
         if (flags.start) options.start = flags.start as string;
         if (flags.end) options.end = flags.end as string;
 
-        const result = await punchEdit(db, options);
-
-        const time = result.startTime.toLocaleTimeString("en-US", {
-          hour: "numeric",
-          minute: "2-digit",
-        });
-        const projectPart = result.project ? ` on ${result.project}` : "";
-        console.log(
-          `✓ Updated '${result.taskName}'${projectPart} starting at ${time}`,
+        const exit = await Effect.runPromiseExit(
+          punchEdit(options).pipe(Effect.provide(DB.Live)),
         );
+
+        Exit.match(exit, {
+          onSuccess: (result) => {
+            const time = result.startTime.toLocaleTimeString("en-US", {
+              hour: "numeric",
+              minute: "2-digit",
+            });
+            const projectPart = result.project ? ` on ${result.project}` : "";
+            console.log(
+              `✓ Updated '${result.taskName}'${projectPart} starting at ${time}`,
+            );
+          },
+          onFailure: (e) => console.error(e), // TODO: handle errors better?
+        });
+
         break;
       }
 
@@ -272,8 +282,15 @@ async function main() {
         const project = (flags.p || flags.project) as string | undefined;
         if (project) filters.project = project;
 
-        const entries = await punchLog(db, filters);
-        console.log(formatLogTable(entries));
+        const exit = await Effect.runPromiseExit(
+          punchLog(filters).pipe(Effect.provide(DB.Live)),
+        );
+
+        Exit.match(exit, {
+          onFailure: console.error, // TODO: handle errors
+          onSuccess: (entries) => console.log(formatLogTable(entries)),
+        });
+
         break;
       }
 

@@ -1,5 +1,11 @@
 import { test, expect, describe } from "bun:test";
-import { formatTime, formatDuration, formatDate, formatLogTable, type LogEntry } from "./format";
+import {
+  formatTime,
+  formatDuration,
+  formatDate,
+  formatLogTable,
+} from "./format";
+import type { LogEntry } from "~/core/punch-log";
 
 describe("formatTime", () => {
   test("formats time in 12-hour format with am/pm", () => {
@@ -202,6 +208,8 @@ describe("formatLogTable", () => {
     ];
 
     const result = formatLogTable(entries);
-    expect(result).toContain("Very long task name that should expand the column width");
+    expect(result).toContain(
+      "Very long task name that should expand the column width",
+    );
   });
 });

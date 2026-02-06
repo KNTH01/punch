@@ -3,6 +3,7 @@ import { isNull } from "drizzle-orm";
 import { entries } from "../db/schema";
 import { TaskAlreadyRunningError } from "./errors";
 import { DB } from "~/db";
+import { DBError } from "~/db/errors";
 
 export const punchIn = (taskName: string, options: { project?: string } = {}) =>
   Effect.gen(function* () {
@@ -33,6 +34,12 @@ export const punchIn = (taskName: string, options: { project?: string } = {}) =>
         })
         .returning(),
     );
+
+    if (!entry) {
+      return yield* new DBError({
+        cause: "Inserting into DB without returning value",
+      });
+    }
 
     return entry;
   });

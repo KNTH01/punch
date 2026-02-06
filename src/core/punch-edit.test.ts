@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import { DBTest, withDB } from "~/db/test-db";
 import { DB } from "~/db";
 import { punchIn } from "~/core/punch-in";
-import { punchEdit } from "~/core/edit";
+import { punchEdit } from "~/core/punch-edit";
 import { entries } from "~/db/schema";
 import {
   InvalidEndTimeError,
@@ -177,9 +177,7 @@ describe("punchEdit", () => {
 
   test("updates start time", async () => {
     const result = await runTest(
-      punchIn("Task").pipe(
-        Effect.andThen(() => punchEdit({ start: "14:00" })),
-      ),
+      punchIn("Task").pipe(Effect.andThen(() => punchEdit({ start: "14:00" }))),
     );
 
     expect(result.startTime.getHours()).toBe(14);

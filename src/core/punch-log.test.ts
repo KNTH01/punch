@@ -4,7 +4,7 @@ import { DBTest, withDB } from "~/db/test-db";
 import { DB } from "~/db";
 import { punchIn } from "~/core/punch-in";
 import { punchOut } from "~/core/punch-out";
-import { punchLog, LogOptionsValidationError } from "~/core/log";
+import { punchLog, LogOptionsValidationError } from "~/core/punch-log";
 import { entries } from "~/db/schema";
 
 describe("punchLog", () => {
@@ -192,7 +192,9 @@ describe("punchLog", () => {
       }).pipe(Effect.andThen(() => punchLog({ month: true }))),
     );
 
-    const monthStartTask = results.find((r) => r.taskName === "Month start task");
+    const monthStartTask = results.find(
+      (r) => r.taskName === "Month start task",
+    );
     expect(monthStartTask).toBeDefined();
     const lastMonthTask = results.find((r) => r.taskName === "Last month task");
     expect(lastMonthTask).toBeUndefined();
@@ -228,7 +230,9 @@ describe("punchLog", () => {
       punchIn("Project A task", { project: "project-a" }).pipe(
         Effect.andThen(() => Bun.sleep(1)),
         Effect.andThen(() => punchOut()),
-        Effect.andThen(() => punchIn("Project B task", { project: "project-b" })),
+        Effect.andThen(() =>
+          punchIn("Project B task", { project: "project-b" }),
+        ),
         Effect.andThen(() => Bun.sleep(1)),
         Effect.andThen(() => punchOut()),
         Effect.andThen(() =>
