@@ -34,7 +34,9 @@ describe("punchIn (Effect)", () => {
 
       if (error._tag === "Some") {
         expect(error.value).toBeInstanceOf(TaskAlreadyRunningError);
-        expect(error.value.taskName).toBe("task1");
+        if (error.value._tag === "TaskAlreadyRunningError") {
+          expect(error.value.taskName).toBe("task1");
+        }
       }
     }
   });
