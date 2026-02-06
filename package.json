@@ -9,7 +9,8 @@
     "typecheck": "bun --bun tsc --noEmit",
     "lint": "oxlint --type-aware --fix",
     "format": "oxfmt",
-    "build": "bun build src/index.ts --compile --outfile punch"
+    "build": "bun build src/index.ts --compile --outfile punch",
+    "test": "bun test"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.1",
