@@ -80,6 +80,18 @@ If you write implementation before tests, DELETE it and start over with TDD.
 - `endTime = null` means active task
 - Always update `updatedAt` on modifications
 
+## Effect Best Practices
+
+**IMPORTANT:** Always consult effect-solutions before writing Effect code.
+
+1. Run `effect-solutions list` to see available guides
+2. Run `effect-solutions show <topic>...` for relevant patterns (supports multiple topics)
+3. Search using  `btca` for real implementations (run `btca ask -r effect -q "<question>"`)
+
+Topics: quick-start, project-setup, tsconfig, basics, services-and-layers, data-modeling, error-handling, config, testing, cli.
+
+Never guess at Effect patterns - check the guide first.
+
 ## btca
 
 When you need up-to-date information about technologies used in this project, ask the user if they'd like you to use btca to research.

@@ -95,7 +95,9 @@ async function main() {
         }
 
         const project = (flags.p || flags.project) as string | undefined;
-        const program = punchIn(taskName, { project });
+        const program = punchIn(taskName, {
+          ...(project !== undefined && { project }),
+        });
 
         const exit = await Effect.runPromiseExit(
           program.pipe(Effect.provide(DB.Live)),
@@ -123,7 +125,9 @@ async function main() {
         const at = (flags.a || flags.at) as string | undefined;
 
         const exit = await Effect.runPromiseExit(
-          punchOut({ at }).pipe(Effect.provide(DB.Live)),
+          punchOut({ ...(at !== undefined && { at }) }).pipe(
+            Effect.provide(DB.Live),
+          ),
         );
 
         if (exit._tag === "Failure") {

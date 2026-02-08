@@ -35,6 +35,6 @@
       "specialNotes": "Effect-TS library source code and documentation."
     }
   ],
-  "model": "claude-haiku-4-5",
-  "provider": "anthropic",
+  "model": "anthropic/claude-haiku-4.5",
+  "provider": "openrouter"
 }
